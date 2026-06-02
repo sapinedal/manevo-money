@@ -1,5 +1,8 @@
 FROM node:20-alpine AS builder
 
+# Install system dependencies required by Prisma engine on Alpine
+RUN apk add --no-cache libc6-compat openssl
+
 WORKDIR /app
 
 # Copy root lockfile and package configuration files
@@ -20,6 +23,9 @@ RUN npm run build --workspace=apps/api
 
 # Final production stage
 FROM node:20-alpine
+
+# Install system dependencies required by Prisma engine on Alpine
+RUN apk add --no-cache libc6-compat openssl
 
 WORKDIR /app
 
