@@ -185,7 +185,7 @@ describe('FinanceService', () => {
       // Assert
       expect(mockPrismaService.transaction.findMany).toHaveBeenCalledWith({
         where: { workspaceId },
-        orderBy: { date: 'desc' },
+        orderBy: { id: 'desc' },
         take: 50,
         skip: 0,
         include: {

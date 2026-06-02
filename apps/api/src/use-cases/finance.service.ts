@@ -246,7 +246,7 @@ export class FinanceService {
   async getTransactions(workspaceId: string, limit = 50, offset = 0) {
     return this.prisma.transaction.findMany({
       where: { workspaceId },
-      orderBy: { date: 'desc' },
+      orderBy: { id: 'desc' },
       take: limit,
       skip: offset,
       include: {
