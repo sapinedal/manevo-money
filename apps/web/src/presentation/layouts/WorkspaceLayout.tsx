@@ -186,12 +186,12 @@ export function WorkspaceLayout({ children }: WorkspaceLayoutProps) {
             animate={{ opacity: 0.6 }}
             exit={{ opacity: 0 }}
             onClick={() => setShowMobileSidebar(false)}
-            className="fixed inset-0 bg-black z-30 md:hidden"
+            className="fixed inset-0 bg-black z-30 md:hidden transform-gpu"
           />
         )}
       </AnimatePresence>
 
-      <aside className={`w-72 bg-black flex flex-col justify-between p-6 select-none shrink-0 z-30 fixed md:relative inset-y-0 left-0 transform ${showMobileSidebar ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0 transition-transform duration-300 ease-in-out`}>
+      <aside className={`w-72 bg-black flex flex-col justify-between p-6 select-none shrink-0 z-30 fixed md:relative inset-y-0 left-0 transform ${showMobileSidebar ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0 transition-transform duration-300 ease-in-out transform-gpu`}>
         <div className="space-y-6">
           {/* Workspace selector at the top */}
           <div className="relative">
@@ -294,7 +294,7 @@ export function WorkspaceLayout({ children }: WorkspaceLayoutProps) {
                   animate={{ scale: 1, opacity: 1, y: 0 }}
                   exit={{ scale: 0.92, opacity: 0, y: 15 }}
                   transition={{ type: 'spring', stiffness: 380, damping: 28 }}
-                  className="absolute bottom-14 left-0 bg-[#737f78] border border-[#86928b]/50 text-zinc-900 rounded-[28px] p-6 shadow-2xl w-64 z-50 flex flex-col space-y-4"
+                  className="absolute bottom-14 left-0 bg-[#737f78] border border-[#86928b]/50 text-zinc-900 rounded-[28px] p-6 shadow-2xl w-64 z-50 flex flex-col space-y-4 transform-gpu"
                 >
                   <h3 className="text-xl font-bold text-zinc-900 pl-1 tracking-tight select-none">
                     Opciones

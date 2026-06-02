@@ -28,6 +28,14 @@ export function Dashboard() {
   const [accountId, setAccountId] = React.useState('');
   const [categoryId, setCategoryId] = React.useState('');
   const [error, setError] = React.useState<string | null>(null);
+  const [isMobile, setIsMobile] = React.useState(false);
+
+  React.useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 768);
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   const [formattedDate, setFormattedDate] = React.useState('');
   const [formattedTime, setFormattedTime] = React.useState('');
@@ -179,19 +187,25 @@ export function Dashboard() {
         className="relative overflow-hidden rounded-[32px] bg-gradient-to-br from-[#051e17] via-[#020b08] to-[#030303] border border-[#0c402f]/40 p-8 min-h-[340px] flex flex-col justify-between shadow-2xl"
       >
         {/* Glowing Green Radial Element */}
-        <motion.div
-          animate={{
-            x: [-100, 100, -100],
-            y: [-50, 50, -50],
-            scale: [1, 1.15, 1],
-          }}
-          transition={{
-            duration: 10,
-            repeat: Infinity,
-            ease: "easeInOut"
-          }}
-          className="absolute -right-20 -top-20 w-[650px] h-[650px] rounded-full bg-[radial-gradient(circle,_rgba(0,229,163,0.55)_0%,_rgba(0,229,163,0)_70%)] blur-[95px] pointer-events-none z-0"
-        />
+        {!isMobile ? (
+          <motion.div
+            animate={{
+              x: [-100, 100, -100],
+              y: [-50, 50, -50],
+              scale: [1, 1.15, 1],
+            }}
+            transition={{
+              duration: 10,
+              repeat: Infinity,
+              ease: "easeInOut"
+            }}
+            className="absolute -right-20 -top-20 w-[650px] h-[650px] rounded-full bg-[radial-gradient(circle,_rgba(0,229,163,0.55)_0%,_rgba(0,229,163,0)_70%)] blur-[95px] pointer-events-none z-0 transform-gpu will-change-transform"
+          />
+        ) : (
+          <div
+            className="absolute -right-20 -top-20 w-[650px] h-[650px] rounded-full bg-[radial-gradient(circle,_rgba(0,229,163,0.55)_0%,_rgba(0,229,163,0)_70%)] blur-[95px] pointer-events-none z-0 transform-gpu"
+          />
+        )}
 
         {/* Account Pills Capsule List */}
         <div className="flex flex-wrap gap-2.5 z-10">
@@ -410,7 +424,8 @@ export function Dashboard() {
                       key={tx.id}
                       initial={{ opacity: 0, y: 8 }}
                       animate={{ opacity: 1, y: 0 }}
-                      className="flex justify-between items-center bg-[#070707]/60 border border-white/[0.04] p-4.5 rounded-[22px]"
+                      transition={{ duration: 0.15, ease: "easeOut" }}
+                      className="flex justify-between items-center bg-[#070707]/60 border border-white/[0.04] p-4.5 rounded-[22px] transform-gpu"
                     >
                       <div className="flex items-center gap-3.5">
                         {/* Glowing white sphere icon */}
