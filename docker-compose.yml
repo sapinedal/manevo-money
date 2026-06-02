@@ -12,7 +12,7 @@ services:
       DATABASE_URL: postgresql://postgres:root@127.0.0.1:5432/manevo_money?schema=public
       PORT: 4000
       JWT_SECRET: mane-money-super-secret-production-hash-key-9283
-      CLIENT_URL: https://manevo-money.devsuitpress.com
+      CLIENT_URL: https://money.devsuitpress.com
 
   # 2. Frontend React Web Service (Servido por Nginx interno en puerto 3000)
   web:
@@ -20,7 +20,7 @@ services:
       context: .
       dockerfile: ./apps/web/Dockerfile
       args:
-        - VITE_API_URL=https://manevo-money.devsuitpress.com/api
+        - VITE_API_URL=https://money.devsuitpress.com/api
     container_name: manevo-web
     restart: always
     network_mode: "host"
