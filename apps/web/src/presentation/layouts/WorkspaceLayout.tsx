@@ -15,7 +15,8 @@ import {
   Share2,
   Trash2,
   Copy,
-  Check
+  Check,
+  Menu
 } from 'lucide-react';
 import { useAccounts, useCreateTransaction } from '../../infrastructure/hooks/useFinance';
 import {
@@ -24,11 +25,11 @@ import {
   useRevokeInvitation
 } from '../../infrastructure/hooks/useInvitations';
 import { useLogout } from '../../infrastructure/hooks/useAuth';
-
+ 
 interface WorkspaceLayoutProps {
   children: React.ReactNode;
 }
-
+ 
 export function WorkspaceLayout({ children }: WorkspaceLayoutProps) {
   const { user, activeWorkspaceId, setActiveWorkspaceId } = useAuthStore();
   const logoutMutation = useLogout();
@@ -36,6 +37,7 @@ export function WorkspaceLayout({ children }: WorkspaceLayoutProps) {
   const [showOptions, setShowOptions] = React.useState(false);
   const [showTransferModal, setShowTransferModal] = React.useState(false);
   const [showFeedbackModal, setShowFeedbackModal] = React.useState(false);
+  const [showMobileSidebar, setShowMobileSidebar] = React.useState(false);
 
   // Transfer Form State
   const [transferAmount, setTransferAmount] = React.useState('');
@@ -176,7 +178,20 @@ export function WorkspaceLayout({ children }: WorkspaceLayoutProps) {
 
   return (
     <div className="flex h-screen bg-[#030303] text-zinc-100 font-sans antialiased overflow-hidden relative">
-      <aside className="w-72 bg-black flex flex-col justify-between p-6 select-none shrink-0 relative z-30">
+      {/* Mobile Sidebar Overlay */}
+      <AnimatePresence>
+        {showMobileSidebar && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 0.6 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setShowMobileSidebar(false)}
+            className="fixed inset-0 bg-black z-30 md:hidden"
+          />
+        )}
+      </AnimatePresence>
+
+      <aside className={`w-72 bg-black flex flex-col justify-between p-6 select-none shrink-0 z-30 fixed md:relative inset-y-0 left-0 transform ${showMobileSidebar ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0 transition-transform duration-300 ease-in-out`}>
         <div className="space-y-6">
           {/* Workspace selector at the top */}
           <div className="relative">
@@ -241,6 +256,7 @@ export function WorkspaceLayout({ children }: WorkspaceLayoutProps) {
                 <Link
                   key={item.id}
                   to={item.path}
+                  onClick={() => setShowMobileSidebar(false)}
                   className={`w-fit text-sm transition-all duration-200 ${isActive
                     ? 'bg-[#222a25] border border-[#2c3530] text-white font-bold px-5 py-2.5 rounded-full'
                     : 'text-zinc-500 hover:text-zinc-300 font-semibold px-5 py-2.5 rounded-full hover:bg-white/[0.01]'
@@ -536,7 +552,25 @@ export function WorkspaceLayout({ children }: WorkspaceLayoutProps) {
 
       {/* Main panel display container */}
       <main className="flex-1 flex flex-col overflow-hidden bg-[#030303]">
-        <div className="flex-1 overflow-y-auto p-8 relative">
+        {/* Mobile Header */}
+        <header className="flex md:hidden items-center justify-between px-6 py-4 bg-black border-b border-white/[0.04] z-20 select-none">
+          <div className="flex items-center gap-2">
+            <div className="w-6 h-6 rounded bg-accent-500/10 text-accent-400 flex items-center justify-center font-bold text-xs uppercase">
+              {activeWorkspace?.name.charAt(0) || 'M'}
+            </div>
+            <span className="font-semibold text-xs text-zinc-300 truncate">
+              {activeWorkspace?.name || 'Manevo'}
+            </span>
+          </div>
+          <button
+            onClick={() => setShowMobileSidebar(true)}
+            className="p-1.5 hover:bg-zinc-900 border border-white/[0.04] rounded-xl text-zinc-400 hover:text-white transition-colors"
+          >
+            <Menu className="w-5 h-5" />
+          </button>
+        </header>
+
+        <div className="flex-1 overflow-y-auto p-4 md:p-8 relative">
           <motion.div
             key={location.pathname}
             initial={{ opacity: 0, y: 6 }}

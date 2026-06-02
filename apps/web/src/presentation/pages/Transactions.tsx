@@ -716,7 +716,7 @@ export function Transactions() {
       </div>
 
       {/* TABULAR TRANSACTIONS LIST */}
-      <div className="border border-white/[0.04] bg-[#070707]/30 rounded-[28px] relative overflow-visible">
+      <div className="border border-white/[0.04] bg-[#070707]/30 rounded-[28px] relative overflow-x-auto">
         <table className="w-full text-left border-collapse min-w-[700px]">
           <thead>
             <tr className="border-b border-white/[0.04] text-xs text-zinc-500 font-bold uppercase tracking-wider select-none">
