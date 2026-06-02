@@ -391,21 +391,24 @@ export function WorkspaceLayout({ children }: WorkspaceLayoutProps) {
           {/* Floating Share Workspace Popover */}
           <AnimatePresence>
             {showShareModal && (
-              <>
-                <div
-                  className="fixed inset-0 z-40 cursor-default"
+              <div className="fixed inset-0 z-50 flex items-center justify-center p-0 md:p-4">
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 0.8 }}
+                  exit={{ opacity: 0 }}
                   onClick={() => {
                     setShowShareModal(false);
                     setGeneratedLink(null);
                     setShareError(null);
                   }}
+                  className="absolute inset-0 bg-black/85 backdrop-blur-md"
                 />
                 <motion.div
                   initial={{ scale: 0.92, opacity: 0, y: 15 }}
                   animate={{ scale: 1, opacity: 1, y: 0 }}
                   exit={{ scale: 0.92, opacity: 0, y: 15 }}
                   transition={{ type: 'spring', stiffness: 380, damping: 28 }}
-                  className="absolute bottom-14 left-0 bg-[#09090b]/95 border border-white/[0.08] backdrop-blur-md text-zinc-100 rounded-[28px] p-6 shadow-2xl w-[400px] z-50 flex flex-col space-y-4 font-sans normal-case select-none text-left"
+                  className="relative w-full h-full md:h-auto md:max-w-md bg-[#09090b] border-0 md:border border-white/[0.08] backdrop-blur-md text-zinc-100 rounded-none md:rounded-[28px] p-6 shadow-2xl z-10 flex flex-col space-y-4 font-sans normal-case select-none text-left overflow-y-auto"
                 >
                   <div className="flex justify-between items-center pl-1 border-b border-white/[0.05] pb-3">
                     <h3 className="text-lg font-extrabold text-white tracking-tight">
@@ -544,7 +547,7 @@ export function WorkspaceLayout({ children }: WorkspaceLayoutProps) {
                     </div>
                   </div>
                 </motion.div>
-              </>
+              </div>
             )}
           </AnimatePresence>
         </div>
@@ -586,7 +589,7 @@ export function WorkspaceLayout({ children }: WorkspaceLayoutProps) {
       {/* 1. Modal: Crear transferencia */}
       <AnimatePresence>
         {showTransferModal && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-0 md:p-4">
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -599,7 +602,7 @@ export function WorkspaceLayout({ children }: WorkspaceLayoutProps) {
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.95, opacity: 0 }}
               transition={{ type: 'spring', stiffness: 350, damping: 26 }}
-              className="relative w-full max-w-md bg-[#09090b] border border-white/[0.08] rounded-3xl shadow-2xl p-7 z-10"
+              className="relative w-full h-full md:h-auto md:max-w-md bg-[#09090b] border-0 md:border border-white/[0.08] rounded-none md:rounded-3xl shadow-2xl p-6 md:p-7 z-10 flex flex-col overflow-y-auto"
             >
               <div className="flex items-center justify-between border-b border-white/[0.05] pb-4 mb-6">
                 <h4 className="font-extrabold text-lg text-white">Crear transferencia</h4>
@@ -688,7 +691,7 @@ export function WorkspaceLayout({ children }: WorkspaceLayoutProps) {
       {/* 2. Modal: Feedback */}
       <AnimatePresence>
         {showFeedbackModal && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-0 md:p-4">
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -701,7 +704,7 @@ export function WorkspaceLayout({ children }: WorkspaceLayoutProps) {
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.95, opacity: 0 }}
               transition={{ type: 'spring', stiffness: 350, damping: 26 }}
-              className="relative w-full max-w-md bg-[#09090b] border border-white/[0.08] rounded-3xl shadow-2xl p-7 z-10"
+              className="relative w-full h-full md:h-auto md:max-w-md bg-[#09090b] border-0 md:border border-white/[0.08] rounded-none md:rounded-3xl shadow-2xl p-6 md:p-7 z-10 flex flex-col overflow-y-auto"
             >
               <div className="flex items-center justify-between border-b border-white/[0.05] pb-4 mb-5">
                 <h4 className="font-extrabold text-lg text-white">Enviar Feedback</h4>

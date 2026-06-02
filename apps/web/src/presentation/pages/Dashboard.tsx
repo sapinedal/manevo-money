@@ -254,12 +254,19 @@ export function Dashboard() {
                 animate={{ scale: 1, opacity: 1, y: 0 }}
                 exit={{ scale: 0.92, opacity: 0, y: 15 }}
                 transition={{ type: 'spring', stiffness: 380, damping: 28 }}
-                className="absolute top-16 right-0 bg-[#737f78] border border-[#86928b]/50 text-zinc-950 rounded-[28px] p-6 shadow-2xl w-80 z-40 flex flex-col space-y-4 font-sans select-none"
+                className="fixed inset-0 md:absolute md:inset-auto md:top-16 md:right-0 w-full h-full md:w-80 md:h-auto bg-[#737f78] border-0 md:border border-[#86928b]/50 text-zinc-950 rounded-none md:rounded-[28px] p-6 shadow-2xl z-40 flex flex-col space-y-4 font-sans select-none overflow-y-auto"
               >
                 <div className="flex justify-between items-center pl-1">
                   <h3 className="text-xl font-bold text-zinc-950 tracking-tight">
                     Crear movimiento
                   </h3>
+                  <button
+                    type="button"
+                    onClick={() => setShowAddTxModal(false)}
+                    className="p-1 hover:bg-black/10 rounded-full text-zinc-900 md:hidden transition-colors"
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
                   {/* Expense/Income Toggle */}
                   <div className="flex bg-black/10 rounded-full p-0.5 border border-black/5 text-[10px] font-bold">
                     <button
