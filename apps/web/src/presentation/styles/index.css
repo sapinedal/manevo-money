@@ -1,0 +1,48 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-background text-zinc-100 antialiased font-sans tracking-tight selection:bg-accent-500/20 selection:text-accent-500;
+    background-image: radial-gradient(circle at 50% -20%, rgba(0, 229, 163, 0.05), transparent 60%);
+    background-attachment: fixed;
+  }
+}
+
+/* Custom scrollbars matching premium linear aesthetic */
+::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 99px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+/* Custom glassmorphism class */
+.glass {
+  background: rgba(9, 9, 11, 0.6);
+  backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.glass-card {
+  background: rgba(3, 3, 3, 0.4);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+/* Glow gradient text helper */
+.text-glow {
+  text-shadow: 0 0 20px rgba(0, 229, 163, 0.4);
+}

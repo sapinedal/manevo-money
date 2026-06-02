@@ -1,0 +1,206 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum Role {
+  OWNER
+  ADMIN
+  MEMBER
+  VIEWER
+}
+
+enum InvitationStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+  EXPIRED
+}
+
+enum TransactionType {
+  INCOME
+  EXPENSE
+  TRANSFER
+}
+
+model User {
+  id                  String                @id @default(uuid())
+  email               String                @unique
+  passwordHash        String
+  name                String?
+  avatarUrl           String?
+  createdAt           DateTime              @default(now())
+  updatedAt           DateTime              @updatedAt
+  
+  memberships         WorkspaceMember[]
+  invitationsSent     WorkspaceInvitation[] @relation("SentInvitations")
+  invitationsReceived WorkspaceInvitation[] @relation("ReceivedInvitations")
+  transactionsCreated Transaction[]         @relation("CreatedTransactions")
+}
+
+model Workspace {
+  id          String                @id @default(uuid())
+  name        String
+  slug        String                @unique
+  avatarUrl   String?
+  createdAt   DateTime              @default(now())
+  updatedAt   DateTime              @updatedAt
+
+  members     WorkspaceMember[]
+  accounts    Account[]
+  categories  Category[]
+  transactions Transaction[]
+  budgets     Budget[]
+  invitations WorkspaceInvitation[]
+  financialGoals FinancialGoal[]
+}
+
+model WorkspaceMember {
+  id          String     @id @default(uuid())
+  role        Role       @default(MEMBER)
+  joinedAt    DateTime   @default(now())
+  
+  userId      String
+  user        User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  workspaceId String
+  workspace   Workspace  @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, workspaceId])
+  @@index([workspaceId])
+}
+
+model WorkspaceInvitation {
+  id           String           @id @default(uuid())
+  email        String
+  role         Role             @default(MEMBER)
+  status       InvitationStatus @default(PENDING)
+  token        String           @unique
+  expiresAt    DateTime
+  createdAt    DateTime         @default(now())
+
+  workspaceId  String
+  workspace    Workspace        @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  invitedById  String
+  invitedBy    User             @relation("SentInvitations", fields: [invitedById], references: [id], onDelete: Cascade)
+
+  inviteeId    String?
+  invitee      User?            @relation("ReceivedInvitations", fields: [inviteeId], references: [id], onDelete: Cascade)
+
+  @@index([email])
+  @@index([token])
+}
+
+model Account {
+  id           String       @id @default(uuid())
+  name         String
+  type         String       // e.g. BANK, CASH, CREDIT_CARD, INVESTMENT
+  balance      Decimal      @default(0.00) @db.Decimal(12, 2)
+  currency     String       @default("USD")
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+
+  workspaceId  String
+  workspace    Workspace    @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  transactions           Transaction[] @relation("AccountTransactions")
+  transferTransactions   Transaction[] @relation("TransferAccountTransactions")
+
+  @@index([workspaceId])
+}
+
+model Category {
+  id           String       @id @default(uuid())
+  name         String
+  icon         String?      // Lucide icon key
+  color        String?      // HSL color code
+  isSystem     Boolean      @default(false)
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+
+  workspaceId  String?
+  workspace    Workspace?   @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  transactions Transaction[]
+  budgetLines  BudgetLine[]
+
+  @@unique([name, workspaceId])
+}
+
+model Transaction {
+  id            String          @id @default(uuid())
+  amount        Decimal         @db.Decimal(12, 2)
+  type          TransactionType
+  description   String?
+  date          DateTime
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+
+  workspaceId   String
+  workspace     Workspace       @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  accountId     String
+  account       Account         @relation("AccountTransactions", fields: [accountId], references: [id], onDelete: Cascade)
+
+  toAccountId   String?
+  toAccount     Account?        @relation("TransferAccountTransactions", fields: [toAccountId], references: [id], onDelete: SetNull)
+
+  categoryId    String?
+  category      Category?       @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+
+  createdById   String?
+  creator       User?           @relation("CreatedTransactions", fields: [createdById], references: [id], onDelete: SetNull)
+
+  @@index([workspaceId])
+  @@index([date])
+}
+
+model Budget {
+  id           String       @id @default(uuid())
+  name         String       // e.g., "June 2026 Budget"
+  startDate    DateTime
+  endDate      DateTime
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+
+  workspaceId  String
+  workspace    Workspace    @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  lines        BudgetLine[]
+
+  @@unique([workspaceId, startDate])
+}
+
+model BudgetLine {
+  id           String       @id @default(uuid())
+  limitAmount  Decimal      @db.Decimal(12, 2)
+  spentAmount  Decimal      @default(0.00) @db.Decimal(12, 2)
+
+  budgetId     String
+  budget       Budget       @relation(fields: [budgetId], references: [id], onDelete: Cascade)
+
+  categoryId   String
+  category     Category     @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  @@unique([budgetId, categoryId])
+}
+
+model FinancialGoal {
+  id             String     @id @default(uuid())
+  name           String
+  targetAmount   Decimal    @db.Decimal(12, 2)
+  currentAmount  Decimal    @default(0.00) @db.Decimal(12, 2)
+  deadline       DateTime?
+  createdAt      DateTime   @default(now())
+  updatedAt      DateTime   @updatedAt
+
+  workspaceId    String
+  workspace      Workspace  @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  @@index([workspaceId])
+}
