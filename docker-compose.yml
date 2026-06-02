@@ -1,0 +1,28 @@
+version: '3.8'
+
+services:
+  # 1. Backend NestJS API Service
+  api:
+    build:
+      context: .
+      dockerfile: ./apps/api/Dockerfile
+    container_name: manevo-api
+    restart: always
+    network_mode: "host"
+    environment:
+      # Conexión directa a PostgreSQL nativo del host en 127.0.0.1
+      DATABASE_URL: postgresql://postgres:root@127.0.0.1:5432/manevo-money?schema=public
+      PORT: 4000
+      JWT_SECRET: mane-money-super-secret-production-hash-key-9283
+      CLIENT_URL: https://manevo-money.devsuitpress.com
+
+  # 2. Frontend React Web Service (Servido por Nginx interno en puerto 3000)
+  web:
+    build:
+      context: .
+      dockerfile: ./apps/web/Dockerfile
+      args:
+        - VITE_API_URL=https://manevo-money.devsuitpress.com/api
+    container_name: manevo-web
+    restart: always
+    network_mode: "host"
