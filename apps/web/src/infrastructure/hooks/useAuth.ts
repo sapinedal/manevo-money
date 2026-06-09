@@ -24,9 +24,10 @@ export function useRegister() {
   const setUser = useAuthStore((state) => state.setUser);
   return useMutation({
     mutationFn: async (payload: any) => {
-      const { data } = await api.post<User>('/auth/register', payload);
-      setUser(data);
-      return data;
+      const { data } = await api.post<any>('/auth/register', payload);
+      const user = data.user || data;
+      setUser(user);
+      return user;
     },
   });
 }
@@ -35,9 +36,10 @@ export function useLogin() {
   const setUser = useAuthStore((state) => state.setUser);
   return useMutation({
     mutationFn: async (payload: any) => {
-      const { data } = await api.post<User>('/auth/login', payload);
-      setUser(data);
-      return data;
+      const { data } = await api.post<any>('/auth/login', payload);
+      const user = data.user || data;
+      setUser(user);
+      return user;
     },
   });
 }

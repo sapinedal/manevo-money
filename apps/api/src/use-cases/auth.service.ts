@@ -122,14 +122,11 @@ export class AuthService {
       expiresIn: '7d',
     });
 
+    const userWithMemberships = await this.me(user.id);
+
     return {
       token,
-      user: {
-        id: user.id,
-        email: user.email,
-        name: user.name,
-        defaultWorkspaceId: user.memberships[0]?.workspaceId || null,
-      },
+      user: userWithMemberships,
     };
   }
 
