@@ -46,3 +46,95 @@
 .text-glow {
   text-shadow: 0 0 20px rgba(0, 229, 163, 0.4);
 }
+
+/* Pretty Modal Morphism Animations */
+dialog.pretty-modal-dialog {
+  margin: auto;
+  outline: none;
+  color: inherit;
+}
+
+dialog.pretty-modal-dialog:not([open]) {
+  display: none !important;
+}
+
+dialog.pretty-modal-dialog::backdrop {
+  background: rgba(0, 0, 0, 0.85);
+  backdrop-filter: blur(12px);
+  opacity: 0;
+}
+
+dialog.pretty-modal-dialog[open]::backdrop {
+  opacity: 1;
+  backdrop-filter: blur(12px);
+}
+
+dialog.pretty-modal-dialog.pretty-modal-opening::backdrop {
+  animation: pretty-modal-backdrop-fade-in 700ms cubic-bezier(.56, .27, 0, 1) forwards;
+}
+
+dialog.pretty-modal-dialog.pretty-modal-closing::backdrop {
+  animation: pretty-modal-backdrop-fade-out 700ms cubic-bezier(.56, .27, 0, 1) forwards;
+}
+
+@keyframes pretty-modal-backdrop-fade-in {
+  from { opacity: 0; backdrop-filter: blur(0px); }
+  to { opacity: 1; backdrop-filter: blur(12px); }
+}
+
+@keyframes pretty-modal-backdrop-fade-out {
+  from { opacity: 1; backdrop-filter: blur(12px); }
+  to { opacity: 0; backdrop-filter: blur(0px); }
+}
+
+/* Animación de Entrada */
+.pretty-modal-opening {
+  animation: pretty-modal-opening 500ms cubic-bezier(.56, .27, 0, 1) forwards;
+}
+
+@keyframes pretty-modal-opening {
+  from {
+    opacity: 0;
+    filter: blur(8px);
+  }
+  to {
+    opacity: 1;
+    filter: blur(0px);
+  }
+}
+
+/* Animación de Salida (Combina 3 efectos concurrentes) */
+.pretty-modal-closing {
+  animation: 
+    pretty-modal-closing-border-radius 500ms cubic-bezier(.56, .27, 0, 1) forwards, 
+    pretty-modal-closing-blur 500ms cubic-bezier(.37, .35, 0, 1) forwards, 
+    pretty-modal-closing-fade 700ms cubic-bezier(.56, .27, 0, 1) forwards;
+}
+
+/* 1. Modificar el radio de borde para simular que colapsa como un botón redondo */
+@keyframes pretty-modal-closing-border-radius {
+  to { 
+    border-radius: 400px; 
+  }
+}
+
+/* 2. Aplicar desenfoque progresivo al cerrar */
+@keyframes pretty-modal-closing-blur {
+  0% { 
+    filter: blur(0); 
+  }
+  100% { 
+    filter: blur(32px); 
+  }
+}
+
+/* 3. Desvanecer opacidad */
+@keyframes pretty-modal-closing-fade {
+  from { 
+    opacity: 1; 
+  }
+  to { 
+    opacity: 0; 
+  }
+}
+

@@ -1,5 +1,6 @@
 import React from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
+import { PrettyModal } from '../components/ui/PrettyModal';
 import { useLogin, useRegister } from '../../infrastructure/hooks/useAuth';
 import { X, Lock, Mail, User, PiggyBank, ExternalLink } from 'lucide-react';
 
@@ -8,7 +9,15 @@ export function Landing() {
   const registerMutation = useRegister();
 
   const [activeModal, setActiveModal] = React.useState<'login' | 'register' | null>(null);
+  const [lastActiveModal, setLastActiveModal] = React.useState<'login' | 'register' | null>(null);
+  const [modalTrigger, setModalTrigger] = React.useState<HTMLElement | null>(null);
   const [error, setError] = React.useState<string | null>(null);
+
+  React.useEffect(() => {
+    if (activeModal) {
+      setLastActiveModal(activeModal);
+    }
+  }, [activeModal]);
 
   // Form inputs
   const [email, setEmail] = React.useState('');
@@ -85,8 +94,9 @@ export function Landing() {
             <motion.button
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
-              onClick={() => {
+              onClick={(e) => {
                 setError(null);
+                setModalTrigger(e.currentTarget);
                 setActiveModal('register');
               }}
               className="px-6 py-4 bg-accent-500 hover:bg-[#00d496] rounded-2xl text-sm font-bold text-black shadow-lg shadow-accent-500/15 transition-all duration-200"
@@ -96,8 +106,9 @@ export function Landing() {
             <motion.button
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
-              onClick={() => {
+              onClick={(e) => {
                 setError(null);
+                setModalTrigger(e.currentTarget);
                 setActiveModal('login');
               }}
               className="px-6 py-4 bg-white/[0.04] hover:bg-white/[0.08] border border-white/[0.06] rounded-2xl text-sm font-bold text-white transition-all duration-200"
@@ -223,140 +234,123 @@ export function Landing() {
       </div>
 
       {/* DYNAMIC MODALS OVERLAY */}
-      <AnimatePresence>
-        {activeModal && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-            {/* Backdrop */}
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={() => setActiveModal(null)}
-              className="absolute inset-0 bg-black/80 backdrop-blur-md"
-            />
+      <PrettyModal
+        isOpen={activeModal !== null}
+        onClose={() => setActiveModal(null)}
+        triggerElement={modalTrigger}
+        className="w-[calc(100%-2rem)] max-w-md bg-[#09090b] border border-white/[0.08] rounded-3xl shadow-2xl p-8 overflow-hidden h-auto"
+      >
+        <div className="absolute -left-20 -bottom-20 w-48 h-48 rounded-full bg-accent-500/5 blur-[70px] pointer-events-none" />
 
-            {/* Modal Box */}
-            <motion.div
-              initial={{ scale: 0.95, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.95, opacity: 0 }}
-              transition={{ type: 'spring', stiffness: 350, damping: 26 }}
-              className="relative w-full max-w-md bg-[#09090b] border border-white/[0.08] rounded-3xl shadow-2xl p-8 overflow-hidden z-10"
-            >
-              <div className="absolute -left-20 -bottom-20 w-48 h-48 rounded-full bg-accent-500/5 blur-[70px] pointer-events-none" />
+        <div className="flex items-center justify-between border-b border-white/[0.05] pb-4 mb-6">
+          <h4 className="font-extrabold text-xl text-white">
+            {lastActiveModal === 'login' ? 'Iniciar Sesión' : 'Registrarse'}
+          </h4>
+          <button
+            onClick={() => setActiveModal(null)}
+            className="p-1.5 hover:bg-zinc-900 border border-white/[0.04] rounded-xl text-zinc-500 hover:text-zinc-300 transition-colors"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        </div>
 
-              <div className="flex items-center justify-between border-b border-white/[0.05] pb-4 mb-6">
-                <h4 className="font-extrabold text-xl text-white">
-                  {activeModal === 'login' ? 'Iniciar Sesión' : 'Registrarse'}
-                </h4>
-                <button
-                  onClick={() => setActiveModal(null)}
-                  className="p-1.5 hover:bg-zinc-900 border border-white/[0.04] rounded-xl text-zinc-500 hover:text-zinc-300 transition-colors"
-                >
-                  <X className="w-4 h-4" />
-                </button>
-              </div>
-
-              {error && (
-                <div className="mb-4 p-3 bg-rose-500/10 border border-rose-500/20 text-rose-400 rounded-xl text-xs font-semibold">
-                  {error}
-                </div>
-              )}
-
-              <form 
-                onSubmit={activeModal === 'login' ? handleLoginSubmit : handleRegisterSubmit} 
-                className="space-y-4"
-              >
-                {activeModal === 'register' && (
-                  <div className="space-y-1.5">
-                    <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest pl-1 flex items-center gap-1.5">
-                      <User className="w-3.5 h-3.5" /> Nombre Completo
-                    </label>
-                    <input
-                      type="text"
-                      required
-                      placeholder="Samuel Pineda"
-                      value={name}
-                      onChange={(e) => setName(e.target.value)}
-                      className="w-full bg-[#030303]/60 border border-white/[0.08] rounded-2xl px-4 py-3 text-sm text-white placeholder-zinc-600 focus:outline-none focus:border-accent-500 focus:ring-4 focus:ring-accent-500/10 transition-all"
-                    />
-                  </div>
-                )}
-
-                <div className="space-y-1.5">
-                  <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest pl-1 flex items-center gap-1.5">
-                    <Mail className="w-3.5 h-3.5" /> Correo Electrónico
-                  </label>
-                  <input
-                    type="email"
-                    required
-                    placeholder="email@ejemplo.com"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    className="w-full bg-[#030303]/60 border border-white/[0.08] rounded-2xl px-4 py-3 text-sm text-white placeholder-zinc-600 focus:outline-none focus:border-accent-500 focus:ring-4 focus:ring-accent-500/10 transition-all"
-                  />
-                </div>
-
-                <div className="space-y-1.5">
-                  <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest pl-1 flex items-center gap-1.5">
-                    <Lock className="w-3.5 h-3.5" /> Contraseña
-                  </label>
-                  <input
-                    type="password"
-                    required
-                    placeholder="••••••••"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    className="w-full bg-[#030303]/60 border border-white/[0.08] rounded-2xl px-4 py-3 text-sm text-white placeholder-zinc-600 focus:outline-none focus:border-accent-500 focus:ring-4 focus:ring-accent-500/10 transition-all"
-                  />
-                </div>
-
-                <motion.button
-                  whileHover={{ scale: 1.01 }}
-                  whileTap={{ scale: 0.99 }}
-                  type="submit"
-                  disabled={loginMutation.isPending || registerMutation.isPending}
-                  className="w-full py-3.5 bg-accent-500 hover:bg-[#00d496] disabled:bg-accent-600/50 rounded-2xl text-sm font-bold text-black transition-colors duration-200 mt-4 shadow-lg shadow-accent-500/10"
-                >
-                  {loginMutation.isPending || registerMutation.isPending ? 'Procesando...' : activeModal === 'login' ? 'Acceder' : 'Registrarse'}
-                </motion.button>
-
-                <div className="text-center text-xs text-zinc-500 mt-4">
-                  {activeModal === 'login' ? (
-                    <>
-                      ¿No tienes una cuenta?{' '}
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setError(null);
-                          setActiveModal('register');
-                        }}
-                        className="text-accent-500 font-bold hover:underline"
-                      >
-                        Créala ahora
-                      </button>
-                    </>
-                  ) : (
-                    <>
-                      ¿Ya tienes una cuenta?{' '}
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setError(null);
-                          setActiveModal('login');
-                        }}
-                        className="text-accent-500 font-bold hover:underline"
-                      >
-                        Inicia sesión
-                      </button>
-                    </>
-                  )}
-                </div>
-              </form>
-            </motion.div>
+        {error && (
+          <div className="mb-4 p-3 bg-rose-500/10 border border-rose-500/20 text-rose-400 rounded-xl text-xs font-semibold">
+            {error}
           </div>
         )}
-      </AnimatePresence>
+
+        <form 
+          onSubmit={lastActiveModal === 'login' ? handleLoginSubmit : handleRegisterSubmit} 
+          className="space-y-4"
+        >
+          {lastActiveModal === 'register' && (
+            <div className="space-y-1.5">
+              <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest pl-1 flex items-center gap-1.5">
+                <User className="w-3.5 h-3.5" /> Nombre Completo
+              </label>
+              <input
+                type="text"
+                required
+                placeholder="Samuel Pineda"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                className="w-full bg-[#030303]/60 border border-white/[0.08] rounded-2xl px-4 py-3 text-sm text-white placeholder-zinc-600 focus:outline-none focus:border-accent-500 focus:ring-4 focus:ring-accent-500/10 transition-all"
+              />
+            </div>
+          )}
+
+          <div className="space-y-1.5">
+            <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest pl-1 flex items-center gap-1.5">
+              <Mail className="w-3.5 h-3.5" /> Correo Electrónico
+            </label>
+            <input
+              type="email"
+              required
+              placeholder="email@ejemplo.com"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="w-full bg-[#030303]/60 border border-white/[0.08] rounded-2xl px-4 py-3 text-sm text-white placeholder-zinc-600 focus:outline-none focus:border-accent-500 focus:ring-4 focus:ring-accent-500/10 transition-all"
+            />
+          </div>
+
+          <div className="space-y-1.5">
+            <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest pl-1 flex items-center gap-1.5">
+              <Lock className="w-3.5 h-3.5" /> Contraseña
+            </label>
+            <input
+              type="password"
+              required
+              placeholder="••••••••"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className="w-full bg-[#030303]/60 border border-white/[0.08] rounded-2xl px-4 py-3 text-sm text-white placeholder-zinc-600 focus:outline-none focus:border-accent-500 focus:ring-4 focus:ring-accent-500/10 transition-all"
+            />
+          </div>
+
+          <motion.button
+            whileHover={{ scale: 1.01 }}
+            whileTap={{ scale: 0.99 }}
+            type="submit"
+            disabled={loginMutation.isPending || registerMutation.isPending}
+            className="w-full py-3.5 bg-accent-500 hover:bg-[#00d496] disabled:bg-accent-600/50 rounded-2xl text-sm font-bold text-black transition-colors duration-200 mt-4 shadow-lg shadow-accent-500/10"
+          >
+            {loginMutation.isPending || registerMutation.isPending ? 'Procesando...' : lastActiveModal === 'login' ? 'Acceder' : 'Registrarse'}
+          </motion.button>
+
+          <div className="text-center text-xs text-zinc-500 mt-4">
+            {lastActiveModal === 'login' ? (
+              <>
+                ¿No tienes una cuenta?{' '}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setError(null);
+                    setActiveModal('register');
+                  }}
+                  className="text-accent-500 font-bold hover:underline"
+                >
+                  Créala ahora
+                </button>
+              </>
+            ) : (
+              <>
+                ¿Ya tienes una cuenta?{' '}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setError(null);
+                    setActiveModal('login');
+                  }}
+                  className="text-accent-500 font-bold hover:underline"
+                >
+                  Inicia sesión
+                </button>
+              </>
+            )}
+          </div>
+        </form>
+      </PrettyModal>
     </div>
   );
 }

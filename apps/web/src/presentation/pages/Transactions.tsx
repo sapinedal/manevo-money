@@ -9,6 +9,7 @@ import {
   useDeleteTransaction
 } from '../../infrastructure/hooks/useFinance';
 import { motion, AnimatePresence } from 'framer-motion';
+import { PrettyModal } from '../components/ui/PrettyModal';
 import {
   Plus,
   X,
@@ -53,6 +54,8 @@ export function Transactions() {
 
   // Layout & Visibility State
   const [showAddModal, setShowAddModal] = React.useState(false);
+  const [modalTrigger, setModalTrigger] = React.useState<HTMLElement | null>(null);
+  const [editTrigger, setEditTrigger] = React.useState<HTMLElement | null>(null);
   const [showFilters, setShowFilters] = React.useState(false);
   const [showSearch, setShowSearch] = React.useState(false);
 
@@ -77,10 +80,17 @@ export function Transactions() {
 
   // Edit/Delete Transaction State
   const [editingTx, setEditingTx] = React.useState<any | null>(null);
+  const [lastEditingTx, setLastEditingTx] = React.useState<any | null>(null);
   const [editDesc, setEditDesc] = React.useState('');
   const [editCategoryId, setEditCategoryId] = React.useState('');
   const [editDate, setEditDate] = React.useState('');
   const [editError, setEditError] = React.useState<string | null>(null);
+
+  React.useEffect(() => {
+    if (editingTx) {
+      setLastEditingTx(editingTx);
+    }
+  }, [editingTx]);
 
   // Initialize Account and Category defaults for creation
   React.useEffect(() => {
@@ -388,7 +398,8 @@ export function Transactions() {
             <motion.button
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
-              onClick={() => {
+              onClick={(e) => {
+                setModalTrigger(e.currentTarget);
                 setShowAddModal(!showAddModal);
                 setAddError(null);
               }}
@@ -400,185 +411,174 @@ export function Transactions() {
           </div>
 
           {/* Sage Green Floating 'Crear movimiento' Popover */}
-          <AnimatePresence>
-            {showAddModal && (
-              <>
-                <div
-                  className="fixed inset-0 z-30 cursor-default"
-                  onClick={() => setShowAddModal(false)}
-                />
-                <motion.div
-                  initial={{ scale: 0.92, opacity: 0, y: 15 }}
-                  animate={{ scale: 1, opacity: 1, y: 0 }}
-                  exit={{ scale: 0.92, opacity: 0, y: 15 }}
-                  transition={{ type: 'spring', stiffness: 380, damping: 28 }}
-                  className="fixed inset-0 md:absolute md:inset-auto md:top-14 md:right-0 w-full h-full md:w-[360px] md:h-auto bg-[#737f78] border-0 md:border border-[#86928b]/50 text-zinc-950 rounded-none md:rounded-[28px] p-6 shadow-2xl z-40 flex flex-col space-y-4 font-sans select-none overflow-y-auto"
+          <PrettyModal
+            isOpen={showAddModal}
+            onClose={() => setShowAddModal(false)}
+            triggerElement={modalTrigger}
+            className="w-[calc(100%-2rem)] max-w-xs bg-[#737f78] border-0 border-[#86928b]/50 text-zinc-950 rounded-[28px] p-6 shadow-2xl flex flex-col space-y-4 font-sans select-none overflow-y-auto"
+          >
+            <div className="flex justify-between items-center pl-1">
+              <h3 className="text-xl font-bold text-zinc-950 tracking-tight">
+                Crear movimiento
+              </h3>
+              <button
+                type="button"
+                onClick={() => setShowAddModal(false)}
+                className="p-1 hover:bg-black/10 rounded-full text-zinc-900 md:hidden transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+
+              {/* Expense/Income/Transfer Toggle */}
+              <div className="flex bg-black/10 rounded-full p-0.5 border border-black/5 text-[9px] font-bold">
+                <button
+                  type="button"
+                  onClick={() => setType('EXPENSE')}
+                  className={`px-2.5 py-1 rounded-full transition-all ${type === 'EXPENSE' ? 'bg-[#737f78] text-zinc-950 shadow-sm' : 'text-zinc-800'}`}
                 >
-                  <div className="flex justify-between items-center pl-1">
-                    <h3 className="text-xl font-bold text-zinc-950 tracking-tight">
-                      Crear movimiento
-                    </h3>
-                    <button
-                      type="button"
-                      onClick={() => setShowAddModal(false)}
-                      className="p-1 hover:bg-black/10 rounded-full text-zinc-900 md:hidden transition-colors"
-                    >
-                      <X className="w-5 h-5" />
-                    </button>
+                  Egreso
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setType('INCOME')}
+                  className={`px-2.5 py-1 rounded-full transition-all ${type === 'INCOME' ? 'bg-[#737f78] text-zinc-950 shadow-sm' : 'text-zinc-800'}`}
+                >
+                  Ingreso
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setType('TRANSFER')}
+                  className={`px-2.5 py-1 rounded-full transition-all ${type === 'TRANSFER' ? 'bg-[#737f78] text-zinc-950 shadow-sm' : 'text-zinc-800'}`}
+                >
+                  Transf
+                </button>
+              </div>
+            </div>
 
-                    {/* Expense/Income/Transfer Toggle */}
-                    <div className="flex bg-black/10 rounded-full p-0.5 border border-black/5 text-[9px] font-bold">
-                      <button
-                        type="button"
-                        onClick={() => setType('EXPENSE')}
-                        className={`px-2.5 py-1 rounded-full transition-all ${type === 'EXPENSE' ? 'bg-[#737f78] text-zinc-950 shadow-sm' : 'text-zinc-800'}`}
-                      >
-                        Egreso
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setType('INCOME')}
-                        className={`px-2.5 py-1 rounded-full transition-all ${type === 'INCOME' ? 'bg-[#737f78] text-zinc-950 shadow-sm' : 'text-zinc-800'}`}
-                      >
-                        Ingreso
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setType('TRANSFER')}
-                        className={`px-2.5 py-1 rounded-full transition-all ${type === 'TRANSFER' ? 'bg-[#737f78] text-zinc-950 shadow-sm' : 'text-zinc-800'}`}
-                      >
-                        Transf
-                      </button>
-                    </div>
-                  </div>
-
-                  {addError && (
-                    <div className="p-3 bg-[#691818] border border-red-500/30 text-white text-xs font-bold rounded-2xl mx-1 select-text">
-                      {addError}
-                    </div>
-                  )}
-
-                  <form onSubmit={handleAddSubmit} className="space-y-4">
-
-                    {/* Amount field */}
-                    <div className="flex items-baseline justify-between border-b border-black/10 pb-1 mx-1">
-                      <input
-                        type="text"
-                        inputMode="numeric"
-                        placeholder="0"
-                        required
-                        value={amount}
-                        onChange={(e) => handleAmountChange(e.target.value)}
-                        className="w-full bg-transparent text-zinc-950 text-3xl font-black focus:outline-none placeholder-zinc-800/40"
-                      />
-                      <span className="text-sm font-black text-zinc-900 select-none">COP</span>
-                    </div>
-
-                    {/* Description Input */}
-                    <input
-                      type="text"
-                      placeholder="Añadir nota/descripción..."
-                      value={description}
-                      onChange={(e) => setDescription(e.target.value)}
-                      className="w-full bg-black/5 hover:bg-black/10 rounded-2xl px-4 py-2.5 text-xs text-zinc-900 placeholder-zinc-800/50 font-semibold focus:outline-none focus:bg-black/10 transition-colors"
-                    />
-
-                    {/* Source Account Custom Selector */}
-                    <div className="space-y-1">
-                      <span className="text-[10px] font-bold text-zinc-800 uppercase tracking-widest pl-1">
-                        {type === 'TRANSFER' ? 'Cuenta origen' : 'Cuenta'}
-                      </span>
-                      <CustomSelect
-                        value={accountId}
-                        onChange={setAccountId}
-                        options={(accounts || []).map((acc: any) => ({
-                          value: acc.id,
-                          label: acc.name,
-                          icon: getAccountEmoji(acc.type)
-                        }))}
-                        variant="popover"
-                      />
-                    </div>
-
-                    {/* Destination Account Selector (Transfer only) */}
-                    {type === 'TRANSFER' && (
-                      <div className="space-y-1">
-                        <span className="text-[10px] font-bold text-zinc-800 uppercase tracking-widest pl-1">Cuenta destino</span>
-                        <CustomSelect
-                          value={toAccountId}
-                          onChange={setToAccountId}
-                          options={(accounts || []).map((acc: any) => ({
-                            value: acc.id,
-                            label: acc.name,
-                            icon: getAccountEmoji(acc.type)
-                          }))}
-                          variant="popover"
-                        />
-                      </div>
-                    )}
-
-                    {/* Category Custom Selector (Expense only) */}
-                    {type === 'EXPENSE' && (
-                      <div className="space-y-1">
-                        <span className="text-[10px] font-bold text-zinc-800 uppercase tracking-widest pl-1">Categoría</span>
-                        <CustomSelect
-                          value={categoryId}
-                          onChange={setCategoryId}
-                          options={[
-                            { value: '', label: 'Sin categoría', icon: '🏷️' },
-                            ...(categories || []).map((cat: any) => ({
-                              value: cat.id,
-                              label: cat.name,
-                              icon: getCategoryEmoji(cat.name)
-                            }))
-                          ]}
-                          variant="popover"
-                        />
-                      </div>
-                    )}
-
-                    {/* Date & Time Row */}
-                    <div className="grid grid-cols-2 gap-3 mx-1">
-                      <div className="space-y-1">
-                        <span className="text-[10px] font-bold text-zinc-800 uppercase tracking-widest pl-1 block">Fecha</span>
-                        <input
-                          type="date"
-                          required
-                          value={txDate}
-                          onChange={(e) => setTxDate(e.target.value)}
-                          className="w-full bg-black/5 hover:bg-black/10 rounded-xl px-3 py-2 text-xs text-zinc-900 font-semibold focus:outline-none"
-                        />
-                      </div>
-                      <div className="space-y-1">
-                        <span className="text-[10px] font-bold text-zinc-800 uppercase tracking-widest pl-1 block">Hora</span>
-                        <input
-                          type="time"
-                          required
-                          value={txTime}
-                          onChange={(e) => setTxTime(e.target.value)}
-                          className="w-full bg-black/5 hover:bg-black/10 rounded-xl px-3 py-2 text-xs text-zinc-900 font-semibold focus:outline-none"
-                        />
-                      </div>
-                    </div>
-
-                    {/* Confirm Button */}
-                    <div className="pt-2">
-                      <motion.button
-                        whileHover={{ scale: 1.01 }}
-                        whileTap={{ scale: 0.99 }}
-                        type="submit"
-                        disabled={createTxMutation.isPending}
-                        className="w-full bg-[#0c5c36] hover:bg-[#0e6f42] text-white rounded-2xl py-3 text-xs font-bold transition-all disabled:opacity-50"
-                      >
-                        {createTxMutation.isPending ? 'Guardando...' : 'Confirmar'}
-                      </motion.button>
-                    </div>
-
-                  </form>
-                </motion.div>
-              </>
+            {addError && (
+              <div className="p-3 bg-[#691818] border border-red-500/30 text-white text-xs font-bold rounded-2xl mx-1 select-text">
+                {addError}
+              </div>
             )}
-          </AnimatePresence>
+
+            <form onSubmit={handleAddSubmit} className="space-y-4">
+
+              {/* Amount field */}
+              <div className="flex items-baseline justify-between border-b border-black/10 pb-1 mx-1">
+                <input
+                  type="text"
+                  inputMode="numeric"
+                  placeholder="0"
+                  required
+                  value={amount}
+                  onChange={(e) => handleAmountChange(e.target.value)}
+                  className="w-full bg-transparent text-zinc-950 text-3xl font-black focus:outline-none placeholder-zinc-800/40"
+                />
+                <span className="text-sm font-black text-zinc-900 select-none">COP</span>
+              </div>
+
+              {/* Description Input */}
+              <input
+                type="text"
+                placeholder="Añadir nota/descripción..."
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                className="w-full bg-black/5 hover:bg-black/10 rounded-2xl px-4 py-2.5 text-xs text-zinc-900 placeholder-zinc-800/50 font-semibold focus:outline-none focus:bg-black/10 transition-colors"
+              />
+
+              {/* Source Account Custom Selector */}
+              <div className="space-y-1">
+                <span className="text-[10px] font-bold text-zinc-800 uppercase tracking-widest pl-1">
+                  {type === 'TRANSFER' ? 'Cuenta origen' : 'Cuenta'}
+                </span>
+                <CustomSelect
+                  value={accountId}
+                  onChange={setAccountId}
+                  options={(accounts || []).map((acc: any) => ({
+                    value: acc.id,
+                    label: acc.name,
+                    icon: getAccountEmoji(acc.type)
+                  }))}
+                  variant="popover"
+                />
+              </div>
+
+              {/* Destination Account Selector (Transfer only) */}
+              {type === 'TRANSFER' && (
+                <div className="space-y-1">
+                  <span className="text-[10px] font-bold text-zinc-800 uppercase tracking-widest pl-1">Cuenta destino</span>
+                  <CustomSelect
+                    value={toAccountId}
+                    onChange={setToAccountId}
+                    options={(accounts || []).map((acc: any) => ({
+                      value: acc.id,
+                      label: acc.name,
+                      icon: getAccountEmoji(acc.type)
+                    }))}
+                    variant="popover"
+                  />
+                </div>
+              )}
+
+              {/* Category Custom Selector (Expense only) */}
+              {type === 'EXPENSE' && (
+                <div className="space-y-1">
+                  <span className="text-[10px] font-bold text-zinc-800 uppercase tracking-widest pl-1">Categoría</span>
+                  <CustomSelect
+                    value={categoryId}
+                    onChange={setCategoryId}
+                    options={[
+                      { value: '', label: 'Sin categoría', icon: '🏷️' },
+                      ...(categories || []).map((cat: any) => ({
+                        value: cat.id,
+                        label: cat.name,
+                        icon: getCategoryEmoji(cat.name)
+                      }))
+                    ]}
+                    variant="popover"
+                  />
+                </div>
+              )}
+
+              {/* Date & Time Row */}
+              <div className="grid grid-cols-2 gap-3 mx-1">
+                <div className="space-y-1">
+                  <span className="text-[10px] font-bold text-zinc-800 uppercase tracking-widest pl-1 block">Fecha</span>
+                  <input
+                    type="date"
+                    required
+                    value={txDate}
+                    onChange={(e) => setTxDate(e.target.value)}
+                    className="w-full bg-black/5 hover:bg-black/10 rounded-xl px-3 py-2 text-xs text-zinc-900 font-semibold focus:outline-none"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <span className="text-[10px] font-bold text-zinc-800 uppercase tracking-widest pl-1 block">Hora</span>
+                  <input
+                    type="time"
+                    required
+                    value={txTime}
+                    onChange={(e) => setTxTime(e.target.value)}
+                    className="w-full bg-black/5 hover:bg-black/10 rounded-xl px-3 py-2 text-xs text-zinc-900 font-semibold focus:outline-none"
+                  />
+                </div>
+              </div>
+
+              {/* Confirm Button */}
+              <div className="pt-2">
+                <motion.button
+                  whileHover={{ scale: 1.01 }}
+                  whileTap={{ scale: 0.99 }}
+                  type="submit"
+                  disabled={createTxMutation.isPending}
+                  className="w-full bg-[#0c5c36] hover:bg-[#0e6f42] text-white rounded-2xl py-3 text-xs font-bold transition-all disabled:opacity-50"
+                >
+                  {createTxMutation.isPending ? 'Guardando...' : 'Confirmar'}
+                </motion.button>
+              </div>
+
+            </form>
+          </PrettyModal>
 
 
         </div>
@@ -795,12 +795,13 @@ export function Transactions() {
                 hours = hours ? hours : 12;
                 const formattedTimeStr = `${hours}:${minutes} ${ampm}`;
 
-                const isEditing = editingTx?.id === tx.id;
-
                 return (
                   <tr
                     key={tx.id}
-                    onClick={() => handleEditInit(tx)}
+                    onClick={(e) => {
+                      setEditTrigger(e.currentTarget);
+                      handleEditInit(tx);
+                    }}
                     className="relative group hover:bg-white/[0.015] active:bg-white/[0.03] transition-all text-sm cursor-pointer select-none"
                   >
                     {/* Date */}
@@ -859,7 +860,7 @@ export function Transactions() {
                     </td>
 
                     {/* Account */}
-                    <td className="py-6 px-6 text-zinc-300 font-bold relative">
+                    <td className="py-6 px-6 text-zinc-300 font-bold">
                       <div className="flex items-center justify-between gap-1.5">
                         <div className="flex items-center gap-1.5">
                           <span>{getAccountEmoji(tx.account?.type)}</span>
@@ -873,152 +874,6 @@ export function Transactions() {
                           )}
                         </div>
                       </div>
-
-                      {/* Sage Green Floating 'Editar movimiento' Popover */}
-                      <AnimatePresence>
-                        {isEditing && (
-                          <>
-                            <div
-                              className="fixed inset-0 z-30 cursor-default"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setEditingTx(null);
-                              }}
-                            />
-                            <motion.div
-                              initial={{ scale: 0.92, opacity: 0, y: 15 }}
-                              animate={{ scale: 1, opacity: 1, y: 0 }}
-                              exit={{ scale: 0.92, opacity: 0, y: 15 }}
-                              transition={{ type: 'spring', stiffness: 380, damping: 28 }}
-                              onClick={(e) => e.stopPropagation()}
-                              className="fixed inset-0 md:absolute md:inset-auto md:right-6 md:top-1/2 md:-translate-y-1/2 w-full h-full md:w-[360px] md:h-auto bg-[#737f78] border-0 md:border border-[#86928b]/50 text-zinc-950 rounded-none md:rounded-[28px] p-6 shadow-2xl z-40 flex flex-col space-y-4 font-sans normal-case select-none text-left overflow-y-auto"
-                            >
-                              <div className="flex justify-between items-center pl-1">
-                                <h3 className="text-xl font-bold text-zinc-950 tracking-tight">
-                                  Editar movimiento
-                                </h3>
-                                <button
-                                  type="button"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    setEditingTx(null);
-                                  }}
-                                  className="p-1 hover:bg-black/5 rounded-full text-zinc-900 transition-colors"
-                                >
-                                  <X className="w-4 h-4 stroke-[2.5]" />
-                                </button>
-                              </div>
-
-                              {editError && (
-                                <div className="p-3 bg-[#691818] border border-red-500/30 text-white text-xs font-bold rounded-2xl mx-1 select-text">
-                                  {editError}
-                                </div>
-                              )}
-
-                              <form
-                                onSubmit={(e) => {
-                                  e.preventDefault();
-                                  e.stopPropagation();
-                                  handleEditSubmit(e);
-                                }}
-                                className="space-y-4"
-                              >
-
-                                {/* Read-Only Amount Display */}
-                                <div className="flex items-baseline justify-between border-b border-black/10 pb-1.5 mx-1 mb-2 select-text">
-                                  <span className="text-[10px] font-bold text-zinc-800 uppercase tracking-widest pl-1 block">Monto (No editable)</span>
-                                  <div className="text-xl font-black text-zinc-900">
-                                    {editingTx.type === 'EXPENSE' ? '-' : editingTx.type === 'INCOME' ? '+' : ''}
-                                    {formatCurrency(Number(editingTx.amount))}
-                                  </div>
-                                </div>
-
-                                {/* Description Input */}
-                                <div className="space-y-1">
-                                  <span className="text-[10px] font-bold text-zinc-800 uppercase tracking-widest pl-1 block">Descripción</span>
-                                  <input
-                                    type="text"
-                                    required
-                                    placeholder="Añadir nota/descripción..."
-                                    value={editDesc}
-                                    onChange={(e) => setEditDesc(e.target.value)}
-                                    className="w-full bg-black/5 hover:bg-black/10 rounded-2xl px-4 py-2.5 text-xs text-zinc-900 placeholder-zinc-800/50 font-semibold focus:outline-none focus:bg-black/10 transition-colors"
-                                  />
-                                </div>
-
-                                {/* Category Custom Selector (only if expense) */}
-                                {editingTx.type === 'EXPENSE' && (
-                                  <div className="space-y-1">
-                                    <span className="text-[10px] font-bold text-zinc-800 uppercase tracking-widest pl-1">Categoría</span>
-                                    <CustomSelect
-                                      value={editCategoryId}
-                                      onChange={setEditCategoryId}
-                                      options={[
-                                        { value: '', label: 'Sin categoría', icon: '🏷️' },
-                                        ...(categories || []).map((cat: any) => ({
-                                          value: cat.id,
-                                          label: cat.name,
-                                          icon: getCategoryEmoji(cat.name)
-                                        }))
-                                      ]}
-                                      variant="popover"
-                                    />
-                                  </div>
-                                )}
-
-                                {/* Date Row */}
-                                <div className="space-y-1 mx-1">
-                                  <span className="text-[10px] font-bold text-zinc-800 uppercase tracking-widest pl-1 block">Fecha</span>
-                                  <input
-                                    type="date"
-                                    required
-                                    value={editDate}
-                                    onChange={(e) => setEditDate(e.target.value)}
-                                    className="w-full bg-black/5 hover:bg-black/10 rounded-xl px-3 py-2 text-xs text-zinc-900 font-semibold focus:outline-none"
-                                  />
-                                </div>
-
-                                {/* Actions: Save, Delete, Cancel */}
-                                <div className="flex justify-between items-center pt-2">
-                                  <button
-                                    type="button"
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      handleDeleteTx(editingTx.id);
-                                    }}
-                                    disabled={deleteTxMutation.isPending}
-                                    className="flex items-center justify-center p-2.5 bg-black/5 hover:bg-black/10 rounded-2xl text-rose-800 hover:text-rose-900 transition-colors disabled:opacity-50"
-                                    title="Eliminar movimiento"
-                                  >
-                                    <Trash2 className="w-4 h-4 stroke-[2.5]" />
-                                  </button>
-
-                                  <div className="flex gap-2">
-                                    <button
-                                      type="button"
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        setEditingTx(null);
-                                      }}
-                                      className="px-4 py-2.5 bg-black/5 hover:bg-black/10 text-zinc-800 rounded-2xl text-xs font-bold transition-all"
-                                    >
-                                      Cancelar
-                                    </button>
-                                    <button
-                                      type="submit"
-                                      disabled={updateTxMutation.isPending}
-                                      className="px-5 py-2.5 bg-[#0c5c36] hover:bg-[#0e6f42] text-white rounded-2xl text-xs font-bold transition-all disabled:opacity-50"
-                                    >
-                                      {updateTxMutation.isPending ? 'Guardando...' : 'Guardar'}
-                                    </button>
-                                  </div>
-                                </div>
-
-                              </form>
-                            </motion.div>
-                          </>
-                        )}
-                      </AnimatePresence>
                     </td>
                   </tr>
                 );
@@ -1029,6 +884,129 @@ export function Transactions() {
       </div>
 
 
+
+      {/* Sage Green Floating 'Editar movimiento' PrettyModal */}
+      <PrettyModal
+        isOpen={editingTx !== null}
+        onClose={() => setEditingTx(null)}
+        triggerElement={editTrigger}
+        className="w-[calc(100%-2rem)] max-w-xs bg-[#737f78] border-0 border-[#86928b]/50 text-zinc-950 rounded-[28px] p-6 shadow-2xl flex flex-col space-y-4 font-sans select-none overflow-y-auto"
+      >
+        {lastEditingTx && (
+          <>
+            <div className="flex justify-between items-center pl-1">
+              <h3 className="text-xl font-bold text-zinc-950 tracking-tight">
+                Editar movimiento
+              </h3>
+              <button
+                type="button"
+                onClick={() => setEditingTx(null)}
+                className="p-1 hover:bg-black/5 rounded-full text-zinc-900 transition-colors"
+              >
+                <X className="w-4 h-4 stroke-[2.5]" />
+              </button>
+            </div>
+
+            {editError && (
+              <div className="p-3 bg-[#691818] border border-red-500/30 text-white text-xs font-bold rounded-2xl mx-1 select-text">
+                {editError}
+              </div>
+            )}
+
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                handleEditSubmit(e);
+              }}
+              className="space-y-4"
+            >
+              {/* Read-Only Amount Display */}
+              <div className="flex items-baseline justify-between border-b border-black/10 pb-1.5 mx-1 mb-2 select-text">
+                <span className="text-[10px] font-bold text-zinc-800 uppercase tracking-widest pl-1 block">Monto (No editable)</span>
+                <div className="text-xl font-black text-zinc-900">
+                  {lastEditingTx.type === 'EXPENSE' ? '-' : lastEditingTx.type === 'INCOME' ? '+' : ''}
+                  {formatCurrency(Number(lastEditingTx.amount))}
+                </div>
+              </div>
+
+              {/* Description Input */}
+              <div className="space-y-1">
+                <span className="text-[10px] font-bold text-zinc-800 uppercase tracking-widest pl-1 block">Descripción</span>
+                <input
+                  type="text"
+                  required
+                  placeholder="Añadir nota/descripción..."
+                  value={editDesc}
+                  onChange={(e) => setEditDesc(e.target.value)}
+                  className="w-full bg-black/5 hover:bg-black/10 rounded-2xl px-4 py-2.5 text-xs text-zinc-900 placeholder-zinc-800/50 font-semibold focus:outline-none focus:bg-black/10 transition-colors"
+                />
+              </div>
+
+              {/* Category Custom Selector (only if expense) */}
+              {lastEditingTx.type === 'EXPENSE' && (
+                <div className="space-y-1">
+                  <span className="text-[10px] font-bold text-zinc-800 uppercase tracking-widest pl-1">Categoría</span>
+                  <CustomSelect
+                    value={editCategoryId}
+                    onChange={setEditCategoryId}
+                    options={[
+                      { value: '', label: 'Sin categoría', icon: '🏷️' },
+                      ...(categories || []).map((cat: any) => ({
+                        value: cat.id,
+                        label: cat.name,
+                        icon: getCategoryEmoji(cat.name)
+                      }))
+                    ]}
+                    variant="popover"
+                  />
+                </div>
+              )}
+
+              {/* Date Row */}
+              <div className="space-y-1 mx-1">
+                <span className="text-[10px] font-bold text-zinc-800 uppercase tracking-widest pl-1 block">Fecha</span>
+                <input
+                  type="date"
+                  required
+                  value={editDate}
+                  onChange={(e) => setEditDate(e.target.value)}
+                  className="w-full bg-black/5 hover:bg-black/10 rounded-xl px-3 py-2 text-xs text-zinc-900 font-semibold focus:outline-none"
+                />
+              </div>
+
+              {/* Actions: Save, Delete, Cancel */}
+              <div className="flex justify-between items-center pt-2">
+                <button
+                  type="button"
+                  onClick={() => handleDeleteTx(lastEditingTx.id)}
+                  disabled={deleteTxMutation.isPending}
+                  className="flex items-center justify-center p-2.5 bg-black/5 hover:bg-black/10 rounded-2xl text-rose-800 hover:text-rose-900 transition-colors disabled:opacity-50"
+                  title="Eliminar movimiento"
+                >
+                  <Trash2 className="w-4 h-4 stroke-[2.5]" />
+                </button>
+
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setEditingTx(null)}
+                    className="px-4 py-2.5 bg-black/5 hover:bg-black/10 text-zinc-800 rounded-2xl text-xs font-bold transition-all"
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={updateTxMutation.isPending}
+                    className="px-5 py-2.5 bg-[#0c5c36] hover:bg-[#0e6f42] text-white rounded-2xl text-xs font-bold transition-all disabled:opacity-50"
+                  >
+                    {updateTxMutation.isPending ? 'Guardando...' : 'Guardar'}
+                  </button>
+                </div>
+              </div>
+            </form>
+          </>
+        )}
+      </PrettyModal>
 
     </div>
   );

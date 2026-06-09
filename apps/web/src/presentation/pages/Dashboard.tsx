@@ -5,10 +5,13 @@ import {
   useAccounts,
   useCategories,
   useCreateTransaction,
-  useTransactions
+  useTransactions,
+  useUpdateTransaction,
+  useDeleteTransaction
 } from '../../infrastructure/hooks/useFinance';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Plus, X, Sparkles, SlidersHorizontal } from 'lucide-react';
+import { motion } from 'framer-motion';
+import { PrettyModal } from '../components/ui/PrettyModal';
+import { Plus, X, Sparkles, SlidersHorizontal, Trash2 } from 'lucide-react';
 import { CustomSelect } from '../components/ui/CustomSelect';
 
 export function Dashboard() {
@@ -18,8 +21,63 @@ export function Dashboard() {
   const { data: categories } = useCategories(activeWorkspaceId);
   const { data: transactions } = useTransactions(activeWorkspaceId);
   const createTransactionMutation = useCreateTransaction(activeWorkspaceId);
+  const updateTxMutation = useUpdateTransaction(activeWorkspaceId);
+  const deleteTxMutation = useDeleteTransaction(activeWorkspaceId);
 
   const [showAddTxModal, setShowAddTxModal] = React.useState(false);
+  const [modalTrigger, setModalTrigger] = React.useState<HTMLElement | null>(null);
+
+  const [editTrigger, setEditTrigger] = React.useState<HTMLElement | null>(null);
+  const [editingTx, setEditingTx] = React.useState<any | null>(null);
+  const [lastEditingTx, setLastEditingTx] = React.useState<any | null>(null);
+  const [editDesc, setEditDesc] = React.useState('');
+  const [editCategoryId, setEditCategoryId] = React.useState('');
+  const [editDate, setEditDate] = React.useState('');
+  const [editError, setEditError] = React.useState<string | null>(null);
+
+  React.useEffect(() => {
+    if (editingTx) {
+      setLastEditingTx(editingTx);
+    }
+  }, [editingTx]);
+
+  const handleEditInit = (tx: any) => {
+    setEditingTx(tx);
+    setEditDesc(tx.description || '');
+    setEditCategoryId(tx.categoryId || '');
+    setEditDate(tx.date.substring(0, 10));
+    setEditError(null);
+  };
+
+  const handleEditSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    setEditError(null);
+
+    updateTxMutation.mutate({
+      id: editingTx.id,
+      description: editDesc,
+      categoryId: editCategoryId || undefined,
+      date: new Date(editDate).toISOString(),
+    }, {
+      onSuccess: () => {
+        setEditingTx(null);
+      },
+      onError: (err: any) => {
+        setEditError(err.response?.data?.message || 'Error al actualizar el movimiento.');
+      }
+    });
+  };
+
+  const handleDeleteTx = (id: string) => {
+    deleteTxMutation.mutate(id, {
+      onSuccess: () => {
+        setEditingTx(null);
+      },
+      onError: (err: any) => {
+        setEditError(err.response?.data?.message || 'Error al eliminar el movimiento.');
+      }
+    });
+  };
 
 
   const [amount, setAmount] = React.useState('');
@@ -245,7 +303,8 @@ export function Dashboard() {
         <motion.button
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
-          onClick={() => {
+          onClick={(e) => {
+            setModalTrigger(e.currentTarget);
             setShowAddTxModal(!showAddTxModal);
           }}
           className="w-20 h-20 bg-accent-500 hover:bg-[#00d496] rounded-full flex items-center justify-center text-black shadow-lg shadow-accent-500/10 hover:shadow-accent-500/25 transition-all duration-200 shrink-0"
@@ -254,143 +313,130 @@ export function Dashboard() {
         </motion.button>
 
         {/* Sage Green Floating 'Crear movimiento' Dropdown Menu */}
-        <AnimatePresence>
-          {showAddTxModal && (
-            <>
-              <div
-                className="fixed inset-0 z-30 cursor-default"
-                onClick={() => {
-                  setShowAddTxModal(false);
-                }}
-              />
-              <motion.div
-                initial={{ scale: 0.92, opacity: 0, y: 15 }}
-                animate={{ scale: 1, opacity: 1, y: 0 }}
-                exit={{ scale: 0.92, opacity: 0, y: 15 }}
-                transition={{ type: 'spring', stiffness: 380, damping: 28 }}
-                className="fixed inset-0 md:absolute md:inset-auto md:top-16 md:right-0 w-full h-full md:w-80 md:h-auto bg-[#737f78] border-0 md:border border-[#86928b]/50 text-zinc-950 rounded-none md:rounded-[28px] p-6 shadow-2xl z-40 flex flex-col space-y-4 font-sans select-none overflow-y-auto"
+        <PrettyModal
+          isOpen={showAddTxModal}
+          onClose={() => setShowAddTxModal(false)}
+          triggerElement={modalTrigger}
+          className="w-[calc(100%-2rem)] max-w-sm bg-[#737f78] border-0 border-[#86928b]/50 text-zinc-950 rounded-[28px] p-6 shadow-2xl flex flex-col space-y-4 font-sans select-none overflow-y-auto"
+        >
+          <div className="flex justify-between items-center pl-1">
+            <h3 className="text-xl font-bold text-zinc-950 tracking-tight">
+              Crear movimiento
+            </h3>
+            <button
+              type="button"
+              onClick={() => setShowAddTxModal(false)}
+              className="p-1 hover:bg-black/10 rounded-full text-zinc-900 md:hidden transition-colors"
+            >
+              <X className="w-5 h-5" />
+            </button>
+            {/* Expense/Income Toggle */}
+            <div className="flex bg-black/10 rounded-full p-0.5 border border-black/5 text-[10px] font-bold">
+              <button
+                type="button"
+                onClick={() => setType('EXPENSE')}
+                className={`px-3 py-1 rounded-full transition-all ${type === 'EXPENSE' ? 'bg-[#737f78] text-zinc-950 shadow-sm' : 'text-zinc-800'
+                  }`}
               >
-                <div className="flex justify-between items-center pl-1">
-                  <h3 className="text-xl font-bold text-zinc-950 tracking-tight">
-                    Crear movimiento
-                  </h3>
-                  <button
-                    type="button"
-                    onClick={() => setShowAddTxModal(false)}
-                    className="p-1 hover:bg-black/10 rounded-full text-zinc-900 md:hidden transition-colors"
-                  >
-                    <X className="w-5 h-5" />
-                  </button>
-                  {/* Expense/Income Toggle */}
-                  <div className="flex bg-black/10 rounded-full p-0.5 border border-black/5 text-[10px] font-bold">
-                    <button
-                      type="button"
-                      onClick={() => setType('EXPENSE')}
-                      className={`px-3 py-1 rounded-full transition-all ${type === 'EXPENSE' ? 'bg-[#737f78] text-zinc-950 shadow-sm' : 'text-zinc-800'
-                        }`}
-                    >
-                      Egreso
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setType('INCOME')}
-                      className={`px-3 py-1 rounded-full transition-all ${type === 'INCOME' ? 'bg-[#737f78] text-zinc-950 shadow-sm' : 'text-zinc-800'
-                        }`}
-                    >
-                      Ingreso
-                    </button>
-                  </div>
-                </div>
+                Egreso
+              </button>
+              <button
+                type="button"
+                onClick={() => setType('INCOME')}
+                className={`px-3 py-1 rounded-full transition-all ${type === 'INCOME' ? 'bg-[#737f78] text-zinc-950 shadow-sm' : 'text-zinc-800'
+                  }`}
+              >
+                Ingreso
+              </button>
+            </div>
+          </div>
 
-                <form onSubmit={handleSubmit} className="space-y-4">
-                  {error && (
-                    <div className="p-3 bg-[#691818] border border-red-500/30 text-white text-xs font-bold rounded-2xl mx-1 select-text">
-                      {error}
-                    </div>
-                  )}
+          <form onSubmit={handleSubmit} className="space-y-4">
+            {error && (
+              <div className="p-3 bg-[#691818] border border-red-500/30 text-white text-xs font-bold rounded-2xl mx-1 select-text">
+                {error}
+              </div>
+            )}
 
-                  {/* Amount and Currency */}
-                  <div className="flex items-baseline justify-between border-b border-black/10 pb-1 mx-1">
-                    <input
-                      type="text"
-                      inputMode="numeric"
-                      placeholder="0"
-                      required
-                      value={amount}
-                      onChange={(e) => handleAmountChange(e.target.value)}
-                      className="w-full bg-transparent text-zinc-950 text-3xl font-black focus:outline-none placeholder-zinc-800/40"
-                    />
-                    <span className="text-sm font-black text-zinc-900 select-none">COP</span>
-                  </div>
+            {/* Amount and Currency */}
+            <div className="flex items-baseline justify-between border-b border-black/10 pb-1 mx-1">
+              <input
+                type="text"
+                inputMode="numeric"
+                placeholder="0"
+                required
+                value={amount}
+                onChange={(e) => handleAmountChange(e.target.value)}
+                className="w-full bg-transparent text-zinc-950 text-3xl font-black focus:outline-none placeholder-zinc-800/40"
+              />
+              <span className="text-sm font-black text-zinc-900 select-none">COP</span>
+            </div>
 
-                  {/* Note/Description text field */}
-                  <input
-                    type="text"
-                    placeholder="Añadir nota/descripción..."
-                    value={description}
-                    onChange={(e) => setDescription(e.target.value)}
-                    className="w-full bg-black/5 hover:bg-black/10 rounded-2xl px-4 py-2.5 text-xs text-zinc-900 placeholder-zinc-800/50 font-semibold focus:outline-none focus:bg-black/10 transition-colors"
-                  />
+            {/* Note/Description text field */}
+            <input
+              type="text"
+              placeholder="Añadir nota/descripción..."
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              className="w-full bg-black/5 hover:bg-black/10 rounded-2xl px-4 py-2.5 text-xs text-zinc-900 placeholder-zinc-800/50 font-semibold focus:outline-none focus:bg-black/10 transition-colors"
+            />
 
-                  {/* 1. Category Custom Selector (Only if Expense) */}
-                  {type === 'EXPENSE' && (
-                    <div className="space-y-1">
-                      <span className="text-[10px] font-bold text-zinc-800 uppercase tracking-widest pl-1">Categoría</span>
-                      <CustomSelect
-                        value={categoryId}
-                        onChange={setCategoryId}
-                        options={[
-                          { value: '', label: 'Sin categoría', icon: '🏷️' },
-                          ...(categories || []).map((cat: any) => ({
-                            value: cat.id,
-                            label: cat.name,
-                            icon: getCategoryEmoji(cat.name)
-                          }))
-                        ]}
-                        variant="popover"
-                      />
-                    </div>
-                  )}
+            {/* 1. Category Custom Selector (Only if Expense) */}
+            {type === 'EXPENSE' && (
+              <div className="space-y-1">
+                <span className="text-[10px] font-bold text-zinc-800 uppercase tracking-widest pl-1">Categoría</span>
+                <CustomSelect
+                  value={categoryId}
+                  onChange={setCategoryId}
+                  options={[
+                    { value: '', label: 'Sin categoría', icon: '🏷️' },
+                    ...(categories || []).map((cat: any) => ({
+                      value: cat.id,
+                      label: cat.name,
+                      icon: getCategoryEmoji(cat.name)
+                    }))
+                  ]}
+                  variant="popover"
+                />
+              </div>
+            )}
 
-                  {/* 2. Account Custom Selector */}
-                  <div className="space-y-1">
-                    <span className="text-[10px] font-bold text-zinc-800 uppercase tracking-widest pl-1">Cuenta</span>
-                    <CustomSelect
-                      value={accountId}
-                      onChange={setAccountId}
-                      options={[
-                        { value: '', label: 'Sin cuenta', icon: '🏦' },
-                        ...(accounts || []).map((acc: any) => ({
-                          value: acc.id,
-                          label: acc.name,
-                          icon: getAccountEmoji(acc.type)
-                        }))
-                      ]}
-                      variant="popover"
-                    />
-                  </div>
+            {/* 2. Account Custom Selector */}
+            <div className="space-y-1">
+              <span className="text-[10px] font-bold text-zinc-800 uppercase tracking-widest pl-1">Cuenta</span>
+              <CustomSelect
+                value={accountId}
+                onChange={setAccountId}
+                options={[
+                  { value: '', label: 'Sin cuenta', icon: '🏦' },
+                  ...(accounts || []).map((acc: any) => ({
+                    value: acc.id,
+                    label: acc.name,
+                    icon: getAccountEmoji(acc.type)
+                  }))
+                ]}
+                variant="popover"
+              />
+            </div>
 
-                  {/* 3. Date & Time Row */}
-                  <div className="flex justify-between items-center text-xs font-bold text-zinc-800 px-1 py-1">
-                    <span>{formattedDate}</span>
-                    <span>{formattedTime}</span>
-                  </div>
+            {/* 3. Date & Time Row */}
+            <div className="flex justify-between items-center text-xs font-bold text-zinc-800 px-1 py-1">
+              <span>{formattedDate}</span>
+              <span>{formattedTime}</span>
+            </div>
 
-                  {/* Submit Button */}
-                  <motion.button
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                    type="submit"
-                    disabled={createTransactionMutation.isPending}
-                    className="w-full py-3 bg-zinc-950 text-white hover:bg-zinc-900 transition-colors rounded-2xl text-xs font-bold shadow-lg shadow-black/10"
-                  >
-                    {createTransactionMutation.isPending ? 'Guardando...' : 'Confirmar'}
-                  </motion.button>
-                </form>
-              </motion.div>
-            </>
-          )}
-        </AnimatePresence>
+            {/* Submit Button */}
+            <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              type="submit"
+              disabled={createTransactionMutation.isPending}
+              className="w-full py-3 bg-zinc-950 text-white hover:bg-zinc-900 transition-colors rounded-2xl text-xs font-bold shadow-lg shadow-black/10"
+            >
+              {createTransactionMutation.isPending ? 'Guardando...' : 'Confirmar'}
+            </motion.button>
+          </form>
+        </PrettyModal>
       </div>
 
       {/* 3. Transactions Section */}
@@ -425,7 +471,11 @@ export function Dashboard() {
                       initial={{ opacity: 0, y: 8 }}
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ duration: 0.15, ease: "easeOut" }}
-                      className="flex justify-between items-center bg-[#070707]/60 border border-white/[0.04] p-4.5 rounded-[22px] transform-gpu"
+                      onClick={(e) => {
+                        setEditTrigger(e.currentTarget);
+                        handleEditInit(tx);
+                      }}
+                      className="flex justify-between items-center bg-[#070707]/60 border border-white/[0.04] p-4.5 rounded-[22px] transform-gpu cursor-pointer hover:bg-white/[0.015] active:bg-white/[0.03] transition-all"
                     >
                       <div className="flex items-center gap-3.5">
                         {/* Glowing white sphere icon */}
@@ -454,6 +504,130 @@ export function Dashboard() {
           </div>
         )}
       </div>
+
+      {/* Sage Green Floating 'Editar movimiento' PrettyModal */}
+      <PrettyModal
+        isOpen={editingTx !== null}
+        onClose={() => setEditingTx(null)}
+        triggerElement={editTrigger}
+        className="w-[calc(100%-2rem)] max-w-xs bg-[#737f78] border-0 border-[#86928b]/50 text-zinc-950 rounded-[28px] p-6 shadow-2xl flex flex-col space-y-4 font-sans select-none overflow-y-auto"
+      >
+        {lastEditingTx && (
+          <>
+            <div className="flex justify-between items-center pl-1">
+              <h3 className="text-xl font-bold text-zinc-950 tracking-tight">
+                Editar movimiento
+              </h3>
+              <button
+                type="button"
+                onClick={() => setEditingTx(null)}
+                className="p-1 hover:bg-black/5 rounded-full text-zinc-900 transition-colors"
+              >
+                <X className="w-4 h-4 stroke-[2.5]" />
+              </button>
+            </div>
+
+            {editError && (
+              <div className="p-3 bg-[#691818] border border-red-500/30 text-white text-xs font-bold rounded-2xl mx-1 select-text">
+                {editError}
+              </div>
+            )}
+
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                handleEditSubmit(e);
+              }}
+              className="space-y-4"
+            >
+              {/* Read-Only Amount Display */}
+              <div className="flex items-baseline justify-between border-b border-black/10 pb-1.5 mx-1 mb-2 select-text">
+                <span className="text-[10px] font-bold text-zinc-800 uppercase tracking-widest pl-1 block">Monto (No editable)</span>
+                <div className="text-xl font-black text-zinc-900">
+                  {lastEditingTx.type === 'EXPENSE' ? '-' : lastEditingTx.type === 'INCOME' ? '+' : ''}
+                  {formatCurrency(Number(lastEditingTx.amount))}
+                </div>
+              </div>
+
+              {/* Description Input */}
+              <div className="space-y-1">
+                <span className="text-[10px] font-bold text-zinc-800 uppercase tracking-widest pl-1 block">Descripción</span>
+                <input
+                  type="text"
+                  required
+                  placeholder="Añadir nota/descripción..."
+                  value={editDesc}
+                  onChange={(e) => setEditDesc(e.target.value)}
+                  className="w-full bg-black/5 hover:bg-black/10 rounded-2xl px-4 py-2.5 text-xs text-zinc-900 placeholder-zinc-800/50 font-semibold focus:outline-none focus:bg-black/10 transition-colors"
+                />
+              </div>
+
+              {/* Category Custom Selector (only if expense) */}
+              {lastEditingTx.type === 'EXPENSE' && (
+                <div className="space-y-1">
+                  <span className="text-[10px] font-bold text-zinc-800 uppercase tracking-widest pl-1">Categoría</span>
+                  <CustomSelect
+                    value={editCategoryId}
+                    onChange={setEditCategoryId}
+                    options={[
+                      { value: '', label: 'Sin categoría', icon: '🏷️' },
+                      ...(categories || []).map((cat: any) => ({
+                        value: cat.id,
+                        label: cat.name,
+                        icon: getCategoryEmoji(cat.name)
+                      }))
+                    ]}
+                    variant="popover"
+                  />
+                </div>
+              )}
+
+              {/* Date Row */}
+              <div className="space-y-1 mx-1">
+                <span className="text-[10px] font-bold text-zinc-800 uppercase tracking-widest pl-1 block">Fecha</span>
+                <input
+                  type="date"
+                  required
+                  value={editDate}
+                  onChange={(e) => setEditDate(e.target.value)}
+                  className="w-full bg-black/5 hover:bg-black/10 rounded-xl px-3 py-2 text-xs text-zinc-900 font-semibold focus:outline-none"
+                />
+              </div>
+
+              {/* Actions: Save, Delete, Cancel */}
+              <div className="flex justify-between items-center pt-2">
+                <button
+                  type="button"
+                  onClick={() => handleDeleteTx(lastEditingTx.id)}
+                  disabled={deleteTxMutation.isPending}
+                  className="flex items-center justify-center p-2.5 bg-black/5 hover:bg-black/10 rounded-2xl text-rose-800 hover:text-rose-900 transition-colors disabled:opacity-50"
+                  title="Eliminar movimiento"
+                >
+                  <Trash2 className="w-4 h-4 stroke-[2.5]" />
+                </button>
+
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setEditingTx(null)}
+                    className="px-4 py-2.5 bg-black/5 hover:bg-black/10 text-zinc-800 rounded-2xl text-xs font-bold transition-all"
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={updateTxMutation.isPending}
+                    className="px-5 py-2.5 bg-[#0c5c36] hover:bg-[#0e6f42] text-white rounded-2xl text-xs font-bold transition-all disabled:opacity-50"
+                  >
+                    {updateTxMutation.isPending ? 'Guardando...' : 'Guardar'}
+                  </button>
+                </div>
+              </div>
+            </form>
+          </>
+        )}
+      </PrettyModal>
+
     </div>
   );
 }

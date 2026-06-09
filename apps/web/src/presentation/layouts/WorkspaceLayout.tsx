@@ -1,6 +1,7 @@
 import React from 'react';
 import { useAuthStore } from '../../core/store/auth.store';
 import { motion, AnimatePresence } from 'framer-motion';
+import { PrettyModal } from '../components/ui/PrettyModal';
 import { Link, useLocation } from 'react-router-dom';
 import {
   Plus,
@@ -38,6 +39,7 @@ export function WorkspaceLayout({ children }: WorkspaceLayoutProps) {
   const [showTransferModal, setShowTransferModal] = React.useState(false);
   const [showFeedbackModal, setShowFeedbackModal] = React.useState(false);
   const [showMobileSidebar, setShowMobileSidebar] = React.useState(false);
+  const optionsButtonRef = React.useRef<HTMLButtonElement | null>(null);
 
   // Transfer Form State
   const [transferAmount, setTransferAmount] = React.useState('');
@@ -272,6 +274,7 @@ export function WorkspaceLayout({ children }: WorkspaceLayoutProps) {
         {/* Options Button at the bottom */}
         <div className="relative pl-1">
           <button
+            ref={optionsButtonRef}
             onClick={() => setShowOptions(!showOptions)}
             className={`w-fit text-sm font-semibold transition-all ${showOptions
               ? 'bg-[#222a25] border border-[#2c3530] text-white px-5 py-2.5 rounded-full'
@@ -388,168 +391,7 @@ export function WorkspaceLayout({ children }: WorkspaceLayoutProps) {
             )}
           </AnimatePresence>
 
-          {/* Floating Share Workspace Popover */}
-          <AnimatePresence>
-            {showShareModal && (
-              <div className="fixed inset-0 z-50 flex items-center justify-center p-0 md:p-4">
-                <motion.div
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 0.8 }}
-                  exit={{ opacity: 0 }}
-                  onClick={() => {
-                    setShowShareModal(false);
-                    setGeneratedLink(null);
-                    setShareError(null);
-                  }}
-                  className="absolute inset-0 bg-black/85 backdrop-blur-md"
-                />
-                <motion.div
-                  initial={{ scale: 0.92, opacity: 0, y: 15 }}
-                  animate={{ scale: 1, opacity: 1, y: 0 }}
-                  exit={{ scale: 0.92, opacity: 0, y: 15 }}
-                  transition={{ type: 'spring', stiffness: 380, damping: 28 }}
-                  className="relative w-full h-full md:h-auto md:max-w-md bg-[#09090b] border-0 md:border border-white/[0.08] backdrop-blur-md text-zinc-100 rounded-none md:rounded-[28px] p-6 shadow-2xl z-10 flex flex-col space-y-4 font-sans normal-case select-none text-left overflow-y-auto"
-                >
-                  <div className="flex justify-between items-center pl-1 border-b border-white/[0.05] pb-3">
-                    <h3 className="text-lg font-extrabold text-white tracking-tight">
-                      Compartir Espacio
-                    </h3>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setShowShareModal(false);
-                        setGeneratedLink(null);
-                        setShareError(null);
-                      }}
-                      className="p-1 hover:bg-white/[0.05] rounded-full text-zinc-400 hover:text-white transition-colors"
-                    >
-                      <X className="w-4 h-4" />
-                    </button>
-                  </div>
-
-                  {shareError && (
-                    <div className="p-3 bg-rose-500/10 border border-rose-500/20 text-rose-400 text-xs font-semibold rounded-xl select-text">
-                      {shareError}
-                    </div>
-                  )}
-
-                  {/* Invite Form */}
-                  <form onSubmit={handleShareSubmit} className="space-y-4">
-                    <div className="grid grid-cols-3 gap-3">
-                      <div className="col-span-2 space-y-1.5">
-                        <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest pl-1 block">Correo Electrónico</span>
-                        <input
-                          type="email"
-                          required
-                          placeholder="amigo@correo.com"
-                          value={inviteEmail}
-                          onChange={(e) => setInviteEmail(e.target.value)}
-                          className="w-full bg-[#030303]/60 border border-white/[0.08] rounded-2xl px-4 py-2.5 text-xs text-white placeholder-zinc-700 font-semibold focus:outline-none focus:border-accent-500 transition-colors"
-                        />
-                      </div>
-
-                      <div className="space-y-1.5">
-                        <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest pl-1 block">Rol</span>
-                        <select
-                          value={inviteRole}
-                          onChange={(e) => setInviteRole(e.target.value)}
-                          className="w-full bg-[#030303]/60 border border-white/[0.08] rounded-2xl px-3 py-2.5 text-xs text-zinc-300 font-semibold focus:outline-none focus:border-accent-500 transition-colors h-[38px]"
-                        >
-                          <option value="MEMBER">Miembro</option>
-                          <option value="ADMIN">Administrador</option>
-                          <option value="VIEWER">Lector</option>
-                        </select>
-                      </div>
-                    </div>
-
-                    <button
-                      type="submit"
-                      disabled={createInvitationMutation.isPending}
-                      className="w-full py-3 bg-accent-500 hover:bg-accent-400 text-black rounded-2xl text-xs font-bold transition-all disabled:opacity-50"
-                    >
-                      {createInvitationMutation.isPending ? 'Generando...' : 'Generar link de invitación'}
-                    </button>
-                  </form>
-
-                  {/* Generated Link Display */}
-                  {generatedLink && (
-                    <div className="p-4 bg-accent-500/10 border border-accent-500/20 rounded-2xl space-y-2">
-                      <span className="text-[10px] font-bold text-accent-400 uppercase tracking-widest">Enlace de Invitación Creado</span>
-                      <div className="flex gap-2">
-                        <input
-                          type="text"
-                          readOnly
-                          value={generatedLink}
-                          className="flex-1 bg-black/40 border border-white/[0.08] rounded-xl px-3 py-2 text-xs text-zinc-300 focus:outline-none"
-                        />
-                        <button
-                          onClick={() => copyToClipboard(generatedLink)}
-                          className="px-3 bg-accent-500 hover:bg-accent-400 text-black font-bold rounded-xl text-xs flex items-center gap-1.5 transition-colors"
-                        >
-                          {copiedLink ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
-                          {copiedLink ? 'Copiado' : 'Copiar'}
-                        </button>
-                      </div>
-                      <p className="text-[9px] text-zinc-500 leading-relaxed pl-1">
-                        Comparte este enlace con el invitado. Vencerá en 7 días y solo se puede utilizar una vez.
-                      </p>
-                    </div>
-                  )}
-
-                  {/* Pending Invitations List */}
-                  <div className="space-y-2 max-h-[180px] overflow-y-auto pr-1">
-                    <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest pl-1 block">Invitaciones Pendientes</span>
-                    <div className="bg-[#030303]/60 border border-white/[0.05] rounded-2xl overflow-hidden divide-y divide-white/[0.03]">
-                      {!invitations || invitations.length === 0 ? (
-                        <div className="p-4 text-center text-xs text-zinc-600">
-                          No hay invitaciones activas o pendientes.
-                        </div>
-                      ) : (
-                        invitations.map((inv: any) => (
-                          <div key={inv.id} className="p-3 flex items-center justify-between gap-3">
-                            <div className="min-w-0 flex-1">
-                              <div className="flex items-center gap-1.5">
-                                <span className="text-xs font-bold text-zinc-200 truncate block">{inv.email}</span>
-                                <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-accent-500/10 text-accent-400">
-                                  Pendiente
-                                </span>
-                              </div>
-                              <div className="flex items-center gap-1.5 mt-0.5 text-[9px] text-zinc-500">
-                                <span>Rol: <strong>{inv.role}</strong></span>
-                                <span>•</span>
-                                <span>Expira: <strong>{new Date(inv.expiresAt).toLocaleDateString()}</strong></span>
-                              </div>
-                            </div>
-
-                            <div className="flex items-center gap-1">
-                              <button
-                                onClick={() => copyToClipboard(`${window.location.origin}/invite/${inv.token}`)}
-                                className="p-1.5 hover:bg-white/[0.05] rounded-lg text-zinc-400 hover:text-white transition-colors"
-                                title="Copiar Enlace"
-                              >
-                                <Copy className="w-3.5 h-3.5" />
-                              </button>
-                              <button
-                                onClick={() => {
-                                  if (window.confirm('¿Estás seguro de que deseas revocar esta invitación?')) {
-                                    revokeInvitationMutation.mutate(inv.id);
-                                  }
-                                }}
-                                className="p-1.5 hover:bg-rose-500/10 rounded-lg text-zinc-500 hover:text-rose-400 transition-colors"
-                                title="Revocar Invitación"
-                              >
-                                <Trash2 className="w-3.5 h-3.5" />
-                              </button>
-                            </div>
-                          </div>
-                        ))
-                      )}
-                    </div>
-                  </div>
-                </motion.div>
-              </div>
-            )}
-          </AnimatePresence>
+          
         </div>
       </aside>
 
@@ -587,170 +429,291 @@ export function WorkspaceLayout({ children }: WorkspaceLayoutProps) {
       </main>
 
       {/* 1. Modal: Crear transferencia */}
-      <AnimatePresence>
-        {showTransferModal && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-0 md:p-4">
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={() => setShowTransferModal(false)}
-              className="absolute inset-0 bg-black/85 backdrop-blur-md"
-            />
-            <motion.div
-              initial={{ scale: 0.95, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.95, opacity: 0 }}
-              transition={{ type: 'spring', stiffness: 350, damping: 26 }}
-              className="relative w-full h-full md:h-auto md:max-w-md bg-[#09090b] border-0 md:border border-white/[0.08] rounded-none md:rounded-3xl shadow-2xl p-6 md:p-7 z-10 flex flex-col overflow-y-auto"
-            >
-              <div className="flex items-center justify-between border-b border-white/[0.05] pb-4 mb-6">
-                <h4 className="font-extrabold text-lg text-white">Crear transferencia</h4>
-                <button
-                  onClick={() => setShowTransferModal(false)}
-                  className="p-1.5 hover:bg-zinc-900 border border-white/[0.04] rounded-xl text-zinc-500 hover:text-zinc-300 transition-colors"
-                >
-                  <X className="w-4 h-4" />
-                </button>
-              </div>
+      <PrettyModal
+        isOpen={showTransferModal}
+        onClose={() => setShowTransferModal(false)}
+        triggerElement={optionsButtonRef.current}
+        className="w-[calc(100%-2rem)] max-w-md bg-[#09090b] border border-white/[0.08] rounded-[28px] h-auto shadow-2xl p-6 md:p-7 flex flex-col overflow-y-auto"
+      >
+        <div className="flex items-center justify-between border-b border-white/[0.05] pb-4 mb-6">
+          <h4 className="font-extrabold text-lg text-white">Crear transferencia</h4>
+          <button
+            onClick={() => setShowTransferModal(false)}
+            className="p-1.5 hover:bg-zinc-900 border border-white/[0.04] rounded-xl text-zinc-500 hover:text-zinc-300 transition-colors"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        </div>
 
-              {transferError && (
-                <div className="mb-4 p-3 bg-rose-500/10 border border-rose-500/20 text-rose-400 text-xs font-semibold rounded-xl">
-                  {transferError}
-                </div>
-              )}
-
-              <form onSubmit={handleTransferSubmit} className="space-y-4">
-                <div className="space-y-1.5">
-                  <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest pl-1">Monto (USD)</label>
-                  <input
-                    type="number"
-                    step="0.01"
-                    required
-                    placeholder="0.00"
-                    value={transferAmount}
-                    onChange={(e) => setTransferAmount(e.target.value)}
-                    className="w-full bg-[#030303]/60 border border-white/[0.08] rounded-2xl px-5 py-4 text-2xl text-white font-extrabold placeholder-zinc-700 focus:outline-none focus:border-accent-500 focus:ring-4 focus:ring-accent-500/10 transition-all"
-                  />
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-1.5">
-                    <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest pl-1">Desde cuenta</label>
-                    <select
-                      value={fromAccountId}
-                      onChange={(e) => setFromAccountId(e.target.value)}
-                      className="w-full bg-[#030303]/60 border border-white/[0.08] rounded-2xl px-4 py-3 text-sm text-zinc-300 focus:outline-none focus:border-accent-500 transition-all"
-                    >
-                      {accounts?.map((acc: any) => (
-                        <option key={acc.id} value={acc.id}>{acc.name} ({new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(Number(acc.balance))})</option>
-                      ))}
-                    </select>
-                  </div>
-
-                  <div className="space-y-1.5">
-                    <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest pl-1">Hacia cuenta</label>
-                    <select
-                      value={toAccountId}
-                      onChange={(e) => setToAccountId(e.target.value)}
-                      className="w-full bg-[#030303]/60 border border-white/[0.08] rounded-2xl px-4 py-3 text-sm text-zinc-300 focus:outline-none focus:border-accent-500 transition-all"
-                    >
-                      {accounts?.map((acc: any) => (
-                        <option key={acc.id} value={acc.id}>{acc.name} ({new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(Number(acc.balance))})</option>
-                      ))}
-                    </select>
-                  </div>
-                </div>
-
-                <div className="space-y-1.5">
-                  <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest pl-1">Descripción</label>
-                  <input
-                    type="text"
-                    required
-                    value={transferDesc}
-                    onChange={(e) => setTransferDesc(e.target.value)}
-                    className="w-full bg-[#030303]/60 border border-white/[0.08] rounded-2xl px-4 py-3.5 text-sm text-white placeholder-zinc-600 focus:outline-none focus:border-accent-500 transition-all"
-                  />
-                </div>
-
-                <motion.button
-                  whileHover={{ scale: 1.01 }}
-                  whileTap={{ scale: 0.99 }}
-                  type="submit"
-                  disabled={createTransactionMutation.isPending}
-                  className="w-full py-4 bg-accent-500 hover:bg-[#00d496] disabled:bg-accent-600/50 rounded-2xl text-sm font-bold text-black transition-colors duration-200 mt-4 shadow-lg shadow-accent-500/10"
-                >
-                  {createTransactionMutation.isPending ? 'Procesando...' : 'Transferir dinero'}
-                </motion.button>
-              </form>
-            </motion.div>
+        {transferError && (
+          <div className="mb-4 p-3 bg-rose-500/10 border border-rose-500/20 text-rose-400 text-xs font-semibold rounded-xl">
+            {transferError}
           </div>
         )}
-      </AnimatePresence>
+
+        <form onSubmit={handleTransferSubmit} className="space-y-4">
+          <div className="space-y-1.5">
+            <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest pl-1">Monto (USD)</label>
+            <input
+              type="number"
+              step="0.01"
+              required
+              placeholder="0.00"
+              value={transferAmount}
+              onChange={(e) => setTransferAmount(e.target.value)}
+              className="w-full bg-[#030303]/60 border border-white/[0.08] rounded-2xl px-5 py-4 text-2xl text-white font-extrabold placeholder-zinc-700 focus:outline-none focus:border-accent-500 focus:ring-4 focus:ring-accent-500/10 transition-all"
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-1.5">
+              <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest pl-1">Desde cuenta</label>
+              <select
+                value={fromAccountId}
+                onChange={(e) => setFromAccountId(e.target.value)}
+                className="w-full bg-[#030303]/60 border border-white/[0.08] rounded-2xl px-4 py-3 text-sm text-zinc-300 focus:outline-none focus:border-accent-500 transition-all"
+              >
+                {accounts?.map((acc: any) => (
+                  <option key={acc.id} value={acc.id}>{acc.name} ({new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(Number(acc.balance))})</option>
+                ))}
+              </select>
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest pl-1">Hacia cuenta</label>
+              <select
+                value={toAccountId}
+                onChange={(e) => setToAccountId(e.target.value)}
+                className="w-full bg-[#030303]/60 border border-white/[0.08] rounded-2xl px-4 py-3 text-sm text-zinc-300 focus:outline-none focus:border-accent-500 transition-all"
+              >
+                {accounts?.map((acc: any) => (
+                  <option key={acc.id} value={acc.id}>{acc.name} ({new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(Number(acc.balance))})</option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          <div className="space-y-1.5">
+            <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest pl-1">Descripción</label>
+            <input
+              type="text"
+              required
+              value={transferDesc}
+              onChange={(e) => setTransferDesc(e.target.value)}
+              className="w-full bg-[#030303]/60 border border-white/[0.08] rounded-2xl px-4 py-3.5 text-sm text-white placeholder-zinc-600 focus:outline-none focus:border-accent-500 transition-all"
+            />
+          </div>
+
+          <motion.button
+            whileHover={{ scale: 1.01 }}
+            whileTap={{ scale: 0.99 }}
+            type="submit"
+            disabled={createTransactionMutation.isPending}
+            className="w-full py-4 bg-accent-500 hover:bg-[#00d496] disabled:bg-accent-600/50 rounded-2xl text-sm font-bold text-black transition-colors duration-200 mt-4 shadow-lg shadow-accent-500/10"
+          >
+            {createTransactionMutation.isPending ? 'Procesando...' : 'Transferir dinero'}
+          </motion.button>
+        </form>
+      </PrettyModal>
 
       {/* 2. Modal: Feedback */}
-      <AnimatePresence>
-        {showFeedbackModal && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-0 md:p-4">
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={() => setShowFeedbackModal(false)}
-              className="absolute inset-0 bg-black/85 backdrop-blur-md"
-            />
-            <motion.div
-              initial={{ scale: 0.95, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.95, opacity: 0 }}
-              transition={{ type: 'spring', stiffness: 350, damping: 26 }}
-              className="relative w-full h-full md:h-auto md:max-w-md bg-[#09090b] border-0 md:border border-white/[0.08] rounded-none md:rounded-3xl shadow-2xl p-6 md:p-7 z-10 flex flex-col overflow-y-auto"
-            >
-              <div className="flex items-center justify-between border-b border-white/[0.05] pb-4 mb-5">
-                <h4 className="font-extrabold text-lg text-white">Enviar Feedback</h4>
-                <button
-                  onClick={() => setShowFeedbackModal(false)}
-                  className="p-1.5 hover:bg-zinc-900 border border-white/[0.04] rounded-xl text-zinc-500 hover:text-zinc-300 transition-colors"
-                >
-                  <X className="w-4 h-4" />
-                </button>
-              </div>
+      <PrettyModal
+        isOpen={showFeedbackModal}
+        onClose={() => setShowFeedbackModal(false)}
+        triggerElement={optionsButtonRef.current}
+        className="w-[calc(100%-2rem)] max-w-md bg-[#09090b] border border-white/[0.08] rounded-[28px] h-auto shadow-2xl p-6 md:p-7 flex flex-col overflow-y-auto"
+      >
+        <div className="flex items-center justify-between border-b border-white/[0.05] pb-4 mb-5">
+          <h4 className="font-extrabold text-lg text-white">Enviar Feedback</h4>
+          <button
+            onClick={() => setShowFeedbackModal(false)}
+            className="p-1.5 hover:bg-zinc-900 border border-white/[0.04] rounded-xl text-zinc-500 hover:text-zinc-300 transition-colors"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        </div>
 
-              {feedbackSuccess ? (
-                <div className="text-center py-8 space-y-3">
-                  <div className="w-12 h-12 rounded-full bg-accent-500/10 border border-accent-500/30 flex items-center justify-center mx-auto">
-                    <MessageSquare className="w-5 h-5 text-accent-500" />
-                  </div>
-                  <h5 className="font-bold text-white text-base">¡Muchas gracias!</h5>
-                  <p className="text-xs text-zinc-500">Tu retroalimentación nos ayuda a mejorar Manevo Money.</p>
-                </div>
-              ) : (
-                <form onSubmit={handleFeedbackSubmit} className="space-y-4">
-                  <p className="text-xs text-zinc-500 leading-relaxed">
-                    ¿Qué te gustaría ver en Manevo? Háznoslo saber. Leemos todos los mensajes.
-                  </p>
-                  <textarea
-                    required
-                    placeholder="Escribe tus comentarios aquí..."
-                    rows={4}
-                    value={feedbackText}
-                    onChange={(e) => setFeedbackText(e.target.value)}
-                    className="w-full bg-[#030303]/60 border border-white/[0.08] rounded-2xl p-4 text-sm text-white placeholder-zinc-700 focus:outline-none focus:border-accent-500 transition-all resize-none"
-                  />
-                  <motion.button
-                    whileHover={{ scale: 1.01 }}
-                    whileTap={{ scale: 0.99 }}
-                    type="submit"
-                    className="w-full py-4 bg-accent-500 hover:bg-[#00d496] rounded-2xl text-sm font-bold text-black shadow-lg shadow-accent-500/10 transition-all duration-200"
-                  >
-                    Enviar Mensaje
-                  </motion.button>
-                </form>
-              )}
-            </motion.div>
+        {feedbackSuccess ? (
+          <div className="text-center py-8 space-y-3">
+            <div className="w-12 h-12 rounded-full bg-accent-500/10 border border-accent-500/30 flex items-center justify-center mx-auto">
+              <MessageSquare className="w-5 h-5 text-accent-500" />
+            </div>
+            <h5 className="font-bold text-white text-base">¡Muchas gracias!</h5>
+            <p className="text-xs text-zinc-500">Tu retroalimentación nos ayuda a mejorar Manevo Money.</p>
+          </div>
+        ) : (
+          <form onSubmit={handleFeedbackSubmit} className="space-y-4">
+            <p className="text-xs text-zinc-500 leading-relaxed">
+              ¿Qué te gustaría ver en Manevo? Háznoslo saber. Leemos todos los mensajes.
+            </p>
+            <textarea
+              required
+              placeholder="Escribe tus comentarios aquí..."
+              rows={4}
+              value={feedbackText}
+              onChange={(e) => setFeedbackText(e.target.value)}
+              className="w-full bg-[#030303]/60 border border-white/[0.08] rounded-2xl p-4 text-sm text-white placeholder-zinc-700 focus:outline-none focus:border-accent-500 transition-all resize-none"
+            />
+            <motion.button
+              whileHover={{ scale: 1.01 }}
+              whileTap={{ scale: 0.99 }}
+              type="submit"
+              className="w-full py-4 bg-accent-500 hover:bg-[#00d496] rounded-2xl text-sm font-bold text-black shadow-lg shadow-accent-500/10 transition-all duration-200"
+            >
+              Enviar Mensaje
+            </motion.button>
+          </form>
+        )}
+      </PrettyModal>
+
+      {/* 3. Modal: Compartir espacio */}
+      <PrettyModal
+        isOpen={showShareModal}
+        onClose={() => {
+          setShowShareModal(false);
+          setGeneratedLink(null);
+          setShareError(null);
+        }}
+        triggerElement={optionsButtonRef.current}
+        className="w-[calc(100%-2rem)] max-w-md bg-[#09090b] border border-white/[0.08] backdrop-blur-md text-zinc-100 rounded-[28px] h-auto p-6 shadow-2xl flex flex-col space-y-4 font-sans normal-case select-none text-left overflow-y-auto"
+      >
+        <div className="flex justify-between items-center pl-1 border-b border-white/[0.05] pb-3">
+          <h3 className="text-lg font-extrabold text-white tracking-tight">
+            Compartir Espacio
+          </h3>
+          <button
+            type="button"
+            onClick={() => {
+              setShowShareModal(false);
+              setGeneratedLink(null);
+              setShareError(null);
+            }}
+            className="p-1 hover:bg-white/[0.05] rounded-full text-zinc-400 hover:text-white transition-colors"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+
+        {shareError && (
+          <div className="p-3 bg-rose-500/10 border border-rose-500/20 text-rose-400 text-xs font-semibold rounded-xl select-text">
+            {shareError}
           </div>
         )}
-      </AnimatePresence>
+
+        {/* Invite Form */}
+        <form onSubmit={handleShareSubmit} className="space-y-4">
+          <div className="grid grid-cols-3 gap-3">
+            <div className="col-span-2 space-y-1.5">
+              <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest pl-1 block">Correo Electrónico</span>
+              <input
+                type="email"
+                required
+                placeholder="amigo@correo.com"
+                value={inviteEmail}
+                onChange={(e) => setInviteEmail(e.target.value)}
+                className="w-full bg-[#030303]/60 border border-white/[0.08] rounded-2xl px-4 py-2.5 text-xs text-white placeholder-zinc-700 font-semibold focus:outline-none focus:border-accent-500 transition-colors"
+              />
+            </div>
+
+            <div className="space-y-1.5">
+              <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest pl-1 block">Rol</span>
+              <select
+                value={inviteRole}
+                onChange={(e) => setInviteRole(e.target.value)}
+                className="w-full bg-[#030303]/60 border border-white/[0.08] rounded-2xl px-3 py-2.5 text-xs text-zinc-300 font-semibold focus:outline-none focus:border-accent-500 transition-colors h-[38px]"
+              >
+                <option value="MEMBER">Miembro</option>
+                <option value="ADMIN">Administrador</option>
+                <option value="VIEWER">Lector</option>
+              </select>
+            </div>
+          </div>
+
+          <button
+            type="submit"
+            disabled={createInvitationMutation.isPending}
+            className="w-full py-3 bg-accent-500 hover:bg-accent-400 text-black rounded-2xl text-xs font-bold transition-all disabled:opacity-50"
+          >
+            {createInvitationMutation.isPending ? 'Generando...' : 'Generar link de invitación'}
+          </button>
+        </form>
+
+        {/* Generated Link Display */}
+        {generatedLink && (
+          <div className="p-4 bg-accent-500/10 border border-accent-500/20 rounded-2xl space-y-2">
+            <span className="text-[10px] font-bold text-accent-400 uppercase tracking-widest">Enlace de Invitación Creado</span>
+            <div className="flex gap-2">
+              <input
+                type="text"
+                readOnly
+                value={generatedLink}
+                className="flex-1 bg-black/40 border border-white/[0.08] rounded-xl px-3 py-2 text-xs text-zinc-300 focus:outline-none"
+              />
+              <button
+                onClick={() => copyToClipboard(generatedLink)}
+                className="px-3 bg-accent-500 hover:bg-accent-400 text-black font-bold rounded-xl text-xs flex items-center gap-1.5 transition-colors"
+              >
+                {copiedLink ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
+                {copiedLink ? 'Copiado' : 'Copiar'}
+              </button>
+            </div>
+            <p className="text-[9px] text-zinc-500 leading-relaxed pl-1">
+              Comparte este enlace con el invitado. Vencerá en 7 días y solo se puede utilizar una vez.
+            </p>
+          </div>
+        )}
+
+        {/* Pending Invitations List */}
+        <div className="space-y-2 max-h-[180px] overflow-y-auto pr-1">
+          <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest pl-1 block">Invitaciones Pendientes</span>
+          <div className="bg-[#030303]/60 border border-white/[0.05] rounded-2xl overflow-hidden divide-y divide-white/[0.03]">
+            {!invitations || invitations.length === 0 ? (
+              <div className="p-4 text-center text-xs text-zinc-600">
+                No hay invitaciones activas o pendientes.
+              </div>
+            ) : (
+              invitations.map((inv: any) => (
+                <div key={inv.id} className="p-3 flex items-center justify-between gap-3">
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-xs font-bold text-zinc-200 truncate block">{inv.email}</span>
+                      <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-accent-500/10 text-accent-400">
+                        Pendiente
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-1.5 mt-0.5 text-[9px] text-zinc-500">
+                      <span>Rol: <strong>{inv.role}</strong></span>
+                      <span>•</span>
+                      <span>Expira: <strong>{new Date(inv.expiresAt).toLocaleDateString()}</strong></span>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-1">
+                    <button
+                      onClick={() => copyToClipboard(`${window.location.origin}/invite/${inv.token}`)}
+                      className="p-1.5 hover:bg-white/[0.05] rounded-lg text-zinc-400 hover:text-white transition-colors"
+                      title="Copiar Enlace"
+                    >
+                      <Copy className="w-3.5 h-3.5" />
+                    </button>
+                    <button
+                      onClick={() => {
+                        if (window.confirm('¿Estás seguro de que deseas revocar esta invitación?')) {
+                          revokeInvitationMutation.mutate(inv.id);
+                        }
+                      }}
+                      className="p-1.5 hover:bg-rose-500/10 rounded-lg text-zinc-500 hover:text-rose-400 transition-colors"
+                      title="Revocar Invitación"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+      </PrettyModal>
 
 
     </div>
